@@ -1,16 +1,20 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
+import { MakeHeaderBadge } from "@/components/MakeGrid";
 import { ModelCard } from "@/components/ModelCard";
 import {
   getAllMakeParams,
   getMake,
+  modelHref,
 } from "@/lib/catalog";
 import { JsonLd, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ make: string }>;
 };
+
+export const dynamicParams = true;
 
 export function generateStaticParams() {
   return getAllMakeParams();
@@ -32,7 +36,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       url: absoluteUrl(`/makes/${make.slug}`),
-      images: [{ url: make.coverImage.src, alt: make.coverImage.alt }],
+      // Brand badge SVGs are used on the page; skip OG photo if cover is a badge.
+      ...(make.coverImage.src.endsWith(".svg")
+        ? {}
+        : {
+            images: [{ url: make.coverImage.src, alt: make.coverImage.alt }],
+          }),
     },
   };
 }
@@ -59,6 +68,7 @@ export default async function MakePage({ params }: Props) {
         ]}
       />
       <header className="mt-6 max-w-3xl">
+        <MakeHeaderBadge make={make} />
         <p className="text-xs uppercase tracking-[0.16em] text-muted">
           {make.country}
         </p>
@@ -73,10 +83,10 @@ export default async function MakePage({ params }: Props) {
           {make.models.map((model) => (
             <li key={model.slug}>
               <ModelCard
-                href={`/makes/${make.slug}/${model.slug}`}
+                href={modelHref(make.slug, model.slug)}
                 title={model.name}
                 subtitle={`${model.tagline} · ${model.years.length} year${model.years.length === 1 ? "" : "s"}`}
-                image={model.years[0]?.images[0] ?? make.coverImage}
+                image={model.years[0]?.images[0]}
               />
             </li>
           ))}

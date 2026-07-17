@@ -2,12 +2,14 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { ModelCard, YearChips } from "@/components/ModelCard";
-import { getAllModelParams, getModel } from "@/lib/catalog";
+import { getAllModelParams, getModel, yearHref } from "@/lib/catalog";
 import { JsonLd, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
 
 type Props = {
   params: Promise<{ make: string; model: string }>;
 };
+
+export const dynamicParams = true;
 
 export function generateStaticParams() {
   return getAllModelParams();
@@ -21,7 +23,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { make, model } = found;
   const title = `${make.name} ${model.name} photos & years`;
   const description = `${model.tagline} Browse ${make.name} ${model.name} model years and galleries on motomediax.`;
-  const image = model.years[0]?.images[0] ?? make.coverImage;
+  const image = model.years[0]?.images[0];
 
   return {
     title,
@@ -31,7 +33,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       url: absoluteUrl(`/makes/${make.slug}/${model.slug}`),
-      images: [{ url: image.src, alt: image.alt }],
+      ...(image ? { images: [{ url: image.src, alt: image.alt }] } : {}),
     },
   };
 }
@@ -89,10 +91,16 @@ export default async function ModelPage({ params }: Props) {
           {yearsSorted.map((year) => (
             <li key={year.slug}>
               <ModelCard
-                href={`/makes/${make.slug}/${model.slug}/${year.slug}`}
+                href={yearHref(make.slug, model.slug, year.slug)}
                 title={`${year.year} ${make.name} ${model.name}`}
-                subtitle={year.summary}
-                image={year.images[0] ?? make.coverImage}
+                subtitle={`${year.summary}${
+                  year.specs?.overallRating
+                    ? ""
+                    : year.highlights?.[0]
+                      ? ` · ${year.highlights[0]}`
+                      : ""
+                }`}
+                image={year.images[0]}
               />
             </li>
           ))}

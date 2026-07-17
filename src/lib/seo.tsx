@@ -6,10 +6,6 @@ export function absoluteUrl(path: string) {
   return `${base}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
-export function pageTitle(parts: string[]) {
-  return [...parts, SITE.name].join(" · ");
-}
-
 type BreadcrumbItem = { name: string; path: string };
 
 export function breadcrumbJsonLd(items: BreadcrumbItem[]) {
