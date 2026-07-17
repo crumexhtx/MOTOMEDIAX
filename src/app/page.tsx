@@ -1,0 +1,113 @@
+import Image from "next/image";
+import Link from "next/link";
+import { MakeGrid } from "@/components/MakeGrid";
+import { SITE } from "@/data/catalog";
+import { getAllMakes, getLatestEntries } from "@/lib/catalog";
+
+export default function HomePage() {
+  const makes = getAllMakes().slice(0, 6);
+  const latest = getLatestEntries(6);
+  const heroImage = latest[0]?.image;
+
+  return (
+    <>
+      <section className="relative min-h-[100svh] overflow-hidden">
+        {heroImage ? (
+          <Image
+            src={heroImage.src}
+            alt={heroImage.alt}
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover"
+          />
+        ) : null}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/35" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(61,156,240,0.22),transparent_45%)]" />
+
+        <div className="container-wide relative flex min-h-[100svh] flex-col justify-end pb-16 pt-28 md:justify-center md:pb-24">
+          <p className="fade-up font-display text-5xl tracking-tight text-white sm:text-6xl md:text-7xl lg:text-8xl">
+            {SITE.name}
+          </p>
+          <h1 className="fade-up-delay mt-5 max-w-2xl text-2xl font-medium leading-tight text-white sm:text-3xl md:text-4xl">
+            Car photos organized the way you actually browse.
+          </h1>
+          <p className="fade-up-delay-2 mt-4 max-w-xl text-base leading-relaxed text-white/75 sm:text-lg">
+            Make → model → year, with clearer navigation and pages built for
+            search.
+          </p>
+          <div className="fade-up-delay-2 mt-8 flex flex-wrap gap-3">
+            <Link
+              href="/makes"
+              className="focus-ring inline-flex items-center rounded-md bg-accent px-5 py-3 text-sm font-semibold text-[#071018] transition hover:brightness-110"
+            >
+              Browse makes
+            </Link>
+            <Link
+              href="/search"
+              className="focus-ring inline-flex items-center rounded-md border border-white/30 bg-white/5 px-5 py-3 text-sm font-medium text-white backdrop-blur transition hover:bg-white/10"
+            >
+              Search catalog
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="container-wide py-20">
+        <div className="mb-8 flex items-end justify-between gap-4">
+          <div>
+            <h2 className="font-display text-3xl tracking-tight md:text-4xl">
+              Start with a make
+            </h2>
+            <p className="mt-2 max-w-xl text-muted">
+              Jump into popular marques, then drill into models and model years.
+            </p>
+          </div>
+          <Link href="/makes" className="focus-ring text-sm text-accent hover:underline">
+            View all
+          </Link>
+        </div>
+        <MakeGrid makes={makes} />
+      </section>
+
+      <section className="border-y border-line bg-elevated/40">
+        <div className="container-wide py-20">
+          <h2 className="font-display text-3xl tracking-tight md:text-4xl">
+            Latest model years
+          </h2>
+          <p className="mt-2 max-w-xl text-muted">
+            Fresh entries from the seeded catalog—each with its own SEO page.
+          </p>
+          <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {latest.map((entry) => (
+              <li key={entry.href}>
+                <Link
+                  href={entry.href}
+                  className="focus-ring group block overflow-hidden rounded-xl border border-line bg-background transition hover:border-accent/40"
+                >
+                  <div className="relative aspect-[16/10] overflow-hidden">
+                    <Image
+                      src={entry.image.src}
+                      alt={entry.image.alt}
+                      fill
+                      sizes="(max-width: 640px) 100vw, 33vw"
+                      className="object-cover transition duration-500 group-hover:scale-[1.03]"
+                    />
+                  </div>
+                  <div className="p-4">
+                    <p className="text-xs uppercase tracking-[0.14em] text-muted">
+                      {entry.year.year}
+                    </p>
+                    <p className="mt-1 font-display text-xl tracking-tight">
+                      {entry.make.name} {entry.model.name}
+                    </p>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+    </>
+  );
+}
