@@ -1,27 +1,23 @@
-import Image from "next/image";
 import Link from "next/link";
+import { HeroBackdrop } from "@/components/HeroBackdrop";
+import { CatalogImage } from "@/components/CatalogImage";
 import { MakeGrid } from "@/components/MakeGrid";
 import { SITE } from "@/data/catalog";
-import { getAllMakes, getLatestEntries } from "@/lib/catalog";
+import {
+  getAllMakes,
+  getHeroBackdropImages,
+  getLatestEntries,
+} from "@/lib/catalog";
 
 export default function HomePage() {
   const makes = getAllMakes().slice(0, 6);
   const latest = getLatestEntries(6);
-  const heroImage = latest[0]?.image;
+  const backdropImages = getHeroBackdropImages(6);
 
   return (
     <>
       <section className="relative min-h-[100svh] overflow-hidden">
-        {heroImage ? (
-          <Image
-            src={heroImage.src}
-            alt={heroImage.alt}
-            fill
-            priority
-            sizes="100vw"
-            className="object-cover"
-          />
-        ) : null}
+        <HeroBackdrop images={backdropImages} />
         <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/35" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(61,156,240,0.22),transparent_45%)]" />
 
@@ -76,7 +72,9 @@ export default function HomePage() {
             Latest model years
           </h2>
           <p className="mt-2 max-w-xl text-muted">
-            Fresh entries from the seeded catalog—each with its own SEO page.
+            Recent entries from the catalog—each with its own SEO page. Photos
+            and copy come from Wikipedia/Wikimedia; specs from NHTSA when
+            available.
           </p>
           <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {latest.map((entry) => (
@@ -86,7 +84,7 @@ export default function HomePage() {
                   className="focus-ring group block overflow-hidden rounded-xl border border-line bg-background transition hover:border-accent/40"
                 >
                   <div className="relative aspect-[16/10] overflow-hidden">
-                    <Image
+                    <CatalogImage
                       src={entry.image.src}
                       alt={entry.image.alt}
                       fill

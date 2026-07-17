@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { SITE } from "@/data/catalog";
 
 const links = [
   { href: "/makes", label: "Makes" },
@@ -22,7 +23,7 @@ export function SiteHeader() {
           className="focus-ring font-display text-xl tracking-tight"
           onClick={() => setOpen(false)}
         >
-          motomediax
+          {SITE.name}
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex" aria-label="Primary">

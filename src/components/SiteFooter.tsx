@@ -28,19 +28,28 @@ export function SiteFooter() {
           </div>
           <div className="flex flex-col gap-2">
             <p className="text-xs uppercase tracking-[0.16em] text-muted">
-              Photos
+              Sources
             </p>
             <p className="leading-relaxed text-muted">
-              Demo imagery via{" "}
+              Photos and overviews from{" "}
               <a
-                href="https://unsplash.com"
+                href="https://www.wikipedia.org/"
                 className="text-foreground underline-offset-2 hover:underline"
                 rel="noreferrer"
                 target="_blank"
               >
-                Unsplash
+                Wikipedia
               </a>
-              . Not affiliated with NetCarShow.
+              /Wikimedia; vehicle specs from{" "}
+              <a
+                href="https://www.nhtsa.gov/"
+                className="text-foreground underline-offset-2 hover:underline"
+                rel="noreferrer"
+                target="_blank"
+              >
+                NHTSA
+              </a>
+              . Not affiliated with manufacturers.
             </p>
           </div>
         </div>

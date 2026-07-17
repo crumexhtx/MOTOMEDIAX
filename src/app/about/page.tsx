@@ -34,13 +34,15 @@ export default function AboutPage() {
           and pages structured for search engines.
         </p>
         <p className="mt-4 leading-relaxed text-muted">
-          This first release uses seeded demo data and royalty-free photography
-          from Unsplash so the experience can be evaluated without copying
-          third-party assets or copy. Content can be expanded or replaced with
-          original photos and write-ups later.
+          Catalog entries are built from Wikipedia/Wikimedia (photos and
+          overviews) and NHTSA (availability and safety ratings where
+          available), covering recent model years for a curated set of popular
+          brands. Imagery and text are attributed on vehicle pages. Content is
+          best-effort and may not match a specific trim or model year photo.
         </p>
         <p className="mt-4 leading-relaxed text-muted">
-          Not affiliated with NetCarShow or any vehicle manufacturer.
+          Not affiliated with Wikipedia, NHTSA, NetCarShow, or any vehicle
+          manufacturer.
         </p>
       </article>
     </div>

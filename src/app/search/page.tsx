@@ -10,7 +10,15 @@ export const metadata: Metadata = {
   alternates: { canonical: "/search" },
 };
 
-export default function SearchPage() {
+type Props = {
+  searchParams: Promise<{ q?: string | string[] }>;
+};
+
+export default async function SearchPage({ searchParams }: Props) {
+  const params = await searchParams;
+  const raw = params.q;
+  const initialQuery = Array.isArray(raw) ? (raw[0] ?? "") : (raw ?? "");
+
   return (
     <div className="container-wide py-10 md:py-14">
       <JsonLd
@@ -35,7 +43,7 @@ export default function SearchPage() {
         </p>
       </header>
       <div className="mt-10 max-w-3xl">
-        <SearchPanel />
+        <SearchPanel key={initialQuery} initialQuery={initialQuery} />
       </div>
     </div>
   );

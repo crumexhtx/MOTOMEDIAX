@@ -53,6 +53,11 @@ a {
   color: var(--fg);
 }
 
+.brand-badge {
+  filter: brightness(0) invert(1);
+  object-fit: contain;
+}
+
 .font-display {
   font-family: var(--font-display), var(--font-body), sans-serif;
 }
@@ -77,6 +82,39 @@ a {
 
 .fade-up-delay-2 {
   animation: fadeUp 0.85s ease 0.22s both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .fade-up,
+  .fade-up-delay,
+  .fade-up-delay-2,
+  .gallery-enter,
+  .make-tile,
+  .make-tile img {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  .make-tile:hover,
+  .make-tile:hover img {
+    transform: none;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
 }
 
 @keyframes fadeUp {
