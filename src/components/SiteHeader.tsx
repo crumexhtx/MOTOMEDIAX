@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 const links = [
   { href: "/makes", label: "Makes" },
@@ -14,14 +14,14 @@ export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
-
   return (
     <header className="sticky top-0 z-40 border-b border-line/80 bg-[rgba(10,12,15,0.82)] backdrop-blur-md">
       <div className="container-wide flex h-16 items-center justify-between gap-4">
-        <Link href="/" className="focus-ring font-display text-xl tracking-tight">
+        <Link
+          href="/"
+          className="focus-ring font-display text-xl tracking-tight"
+          onClick={() => setOpen(false)}
+        >
           motomediax
         </Link>
 
@@ -66,6 +66,7 @@ export function SiteHeader() {
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={() => setOpen(false)}
                 className="focus-ring rounded-md px-2 py-3 text-sm text-muted hover:bg-soft hover:text-foreground"
               >
                 {link.label}

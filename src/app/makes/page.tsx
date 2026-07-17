@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { MakeGrid } from "@/components/MakeGrid";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { getAllMakes } from "@/lib/catalog";
-import { JsonLd, breadcrumbJsonLd, pageTitle } from "@/lib/seo";
+import { JsonLd, breadcrumbJsonLd } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "All makes",
@@ -39,7 +39,6 @@ export default function MakesIndexPage() {
       <div className="mt-10">
         <MakeGrid makes={makes} />
       </div>
-      <span className="sr-only">{pageTitle(["All makes"])}</span>
     </div>
   );
 }
