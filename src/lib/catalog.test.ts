@@ -61,15 +61,23 @@ describe("catalog lookups", () => {
     expect(yearHref("bmw", "x5", "2025")).toBe("/makes/bmw/x5/2025");
   });
 
-  it("picks diverse hero backdrop images when catalog photos exist", () => {
+  it("picks diverse local hero backdrop images when catalog photos exist", () => {
     const images = getHeroBackdropImages(4);
+    expect(images.length).toBeGreaterThan(0);
     expect(images.length).toBeLessThanOrEqual(4);
     expect(new Set(images.map((img) => img.src)).size).toBe(images.length);
     for (const img of images) {
-      expect(
-        img.src.startsWith("/catalog/") || /^https?:\/\//i.test(img.src),
-      ).toBe(true);
+      expect(img.src.startsWith("/catalog/")).toBe(true);
     }
+  });
+
+  it("picks a car photo for make cover tiles", async () => {
+    const { makeCoverImage, getMake } = await import("@/lib/catalog");
+    const toyota = getMake("toyota");
+    expect(toyota).toBeTruthy();
+    const cover = makeCoverImage(toyota!);
+    expect(cover.src.startsWith("/catalog/")).toBe(true);
+    expect(cover.src.endsWith(".svg")).toBe(false);
   });
 
   it("returns latest entries sorted by year descending", () => {

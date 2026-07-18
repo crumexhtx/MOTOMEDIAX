@@ -6,6 +6,7 @@ import { ModelCard } from "@/components/ModelCard";
 import {
   getAllMakeParams,
   getMake,
+  makeCoverImage,
   modelCardImage,
   modelHref,
 } from "@/lib/catalog";
@@ -29,6 +30,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const title = `${make.name} cars & photos`;
   const description = `${make.blurb} Browse ${make.name} models and model-year galleries on motomediax.`;
 
+  const cover = makeCoverImage(make);
+  const ogImage = cover.src.endsWith(".svg")
+    ? undefined
+    : {
+        url: cover.src.startsWith("http")
+          ? cover.src
+          : absoluteUrl(cover.src),
+        alt: cover.alt || `${make.name} cars`,
+      };
+
   return {
     title,
     description,
@@ -37,12 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       url: absoluteUrl(`/makes/${make.slug}`),
-      // Brand badge SVGs are used on the page; skip OG photo if cover is a badge.
-      ...(make.coverImage.src.endsWith(".svg")
-        ? {}
-        : {
-            images: [{ url: make.coverImage.src, alt: make.coverImage.alt }],
-          }),
+      ...(ogImage ? { images: [ogImage] } : {}),
     },
   };
 }

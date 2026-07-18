@@ -199,6 +199,18 @@ export function modelCardImage(
   );
 }
 
+/**
+ * Best cover photo for a make tile: prefer a recent non-SVG car shot.
+ * Falls back to the brand badge when nothing usable exists.
+ */
+export function makeCoverImage(make: MakeEntry): GalleryImage {
+  const fromCar = firstCarImage(make);
+  if (fromCar) return fromCar;
+  const cover = usableImage(make.coverImage);
+  if (cover && !cover.src.endsWith(".svg")) return cover;
+  return brandFallback(make);
+}
+
 export function searchCatalog(query: string, limit = 40): SearchResult[] {
   const q = query.trim().toLowerCase();
   if (!q) return [];
