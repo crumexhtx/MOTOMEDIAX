@@ -1,9 +1,21 @@
+import fs from "node:fs";
+import path from "node:path";
 import type {
   TrimSpec,
   VehicleSpecs,
   YearEntry,
   YearPerformance,
 } from "@/data/catalog";
+
+function localCatalogImageExists(src: string): boolean {
+  if (!src.startsWith("/catalog/")) return /^https?:\/\//i.test(src);
+  try {
+    const abs = path.join(process.cwd(), "public", src.replace(/^\//, ""));
+    return fs.existsSync(abs) && fs.statSync(abs).size > 500;
+  } catch {
+    return false;
+  }
+}
 import toyotaTrims from "@/data/trims/toyota.json";
 import toyotaImages from "@/data/trims/toyota-images.json";
 import fordTrims from "@/data/trims/ford.json";
@@ -92,6 +104,21 @@ export function getCuratedPerformance(
   return attachTrimImages(makeSlug, modelSlug, raw);
 }
 
+function modelCatalogPath(makeSlug: string, modelSlug: string): string {
+  return `/catalog/${makeSlug.toLowerCase()}--${modelSlug.toLowerCase()}.jpg`;
+}
+
+function resolveTrimImageSrc(
+  makeSlug: string,
+  modelSlug: string,
+  declared?: string,
+): string | undefined {
+  if (declared && localCatalogImageExists(declared)) return declared;
+  const fallback = modelCatalogPath(makeSlug, modelSlug);
+  if (localCatalogImageExists(fallback)) return fallback;
+  return undefined;
+}
+
 function attachTrimImages(
   makeSlug: string,
   modelSlug: string,
@@ -99,13 +126,13 @@ function attachTrimImages(
 ): YearPerformance {
   const byModel = IMAGE_BY_MAKE[makeSlug.toLowerCase()];
   const byTrim = byModel?.[modelSlug.toLowerCase()];
-  if (!byTrim) return performance;
   return {
     ...performance,
     trims: performance.trims.map((trim) => {
-      const img = byTrim[trim.id];
-      if (!img?.src) return trim;
-      return { ...trim, image: img.src };
+      const declared = byTrim?.[trim.id]?.src;
+      const src = resolveTrimImageSrc(makeSlug, modelSlug, declared);
+      if (!src) return trim;
+      return { ...trim, image: src };
     }),
   };
 }

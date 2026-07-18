@@ -48,5 +48,8 @@ catalog-image-audit.json
 # catalog build API cache (regenerate with pnpm build:catalog)
 scripts/.cache/
 
-# downloaded Wikimedia photos (regenerate with pnpm build:catalog)
-public/catalog/
+# Prefer committing optimized local photos under public/catalog/ so deploys
+# stay fast without a live Wikimedia download. Regenerate with:
+#   pnpm backfill:images && pnpm localize:images
+# (or pnpm build:catalog). Uncomment the next line only for local scratch dirs:
+# public/catalog/

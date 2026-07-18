@@ -39,6 +39,8 @@ jobs:
 
       - name: Validate catalog
         run: pnpm validate:catalog
+        env:
+          REQUIRE_LOCAL_IMAGES: "1"
 
       - name: Build
         run: pnpm build

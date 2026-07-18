@@ -26,10 +26,10 @@ Set `NEXT_PUBLIC_SITE_URL` to your local or preview origin so canonicals, sitema
 
 - Seed list: [`src/data/brands.json`](src/data/brands.json)
 - Generated catalog: [`src/data/catalog.generated.json`](src/data/catalog.generated.json) (loaded by [`src/data/catalog.server.ts`](src/data/catalog.server.ts))
-- Downloaded photos: `public/catalog/` (gitignored — regenerate with `pnpm build:catalog`)
+- Photos: `public/catalog/` (committed local JPEGs so Next can optimize them; regenerate with `pnpm localize:images`)
 - Rebuild: `pnpm build:catalog` (caches API responses under `scripts/.cache/`)
 - Refresh MPG only: `pnpm enrich:epa`
-- If local photos are missing and you cannot re-download them: `pnpm backfill:images` rewrites those entries to Wikimedia URLs
+- Image pipeline if sources change: `pnpm backfill:images` (remote URLs) → `pnpm localize:images` (download into `public/catalog/`)
 
 ## Build
 
@@ -69,9 +69,8 @@ Overviews and photos are sourced from Wikipedia/Wikimedia Commons; vehicle specs
 - Deploy on Vercel (or any Node host that supports Next.js).
 - Set `NEXT_PUBLIC_SITE_URL` to the production domain (for example `https://motomediax.com`).
 - Preview deployments should use the preview URL so metadata does not point at production.
-- Commit `catalog.generated.json`. Photos under `public/catalog/` are gitignored — either:
-  - set the install/build command to `pnpm build:catalog && pnpm build`, or
-  - run `pnpm backfill:images` so the committed JSON uses remote Wikimedia URLs when locals are absent.
+- Commit `catalog.generated.json` and `public/catalog/` so production builds optimize local photos (no live Wikimedia fetch).
+- If you regenerate the catalog without photos, run `pnpm localize:images` before deploying.
 
 ## Security note
 

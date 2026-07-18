@@ -15,7 +15,9 @@
     "fetch:trim-images": "tsx scripts/fetch-trim-images.ts",
     "audit:images": "tsx scripts/audit-catalog-images.ts",
     "validate:catalog": "tsx scripts/validate-catalog.ts",
-    "backfill:images": "tsx scripts/backfill-remote-images.ts"
+    "backfill:images": "tsx scripts/backfill-remote-images.ts",
+    "localize:images": "tsx scripts/localize-catalog-images.ts",
+    "optimize:images": "tsx scripts/optimize-catalog-images.ts"
   },
   "dependencies": {
     "next": "16.2.10",
@@ -30,6 +32,7 @@
     "@types/react-dom": "^19",
     "eslint": "^9",
     "eslint-config-next": "16.2.10",
+    "sharp": "^0.35.3",
     "tailwindcss": "^4",
     "tsx": "^4.23.1",
     "typescript": "^5",
