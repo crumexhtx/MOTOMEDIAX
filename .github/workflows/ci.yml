@@ -37,6 +37,9 @@ jobs:
       - name: Unit tests
         run: pnpm test
 
+      - name: Validate catalog
+        run: pnpm validate:catalog
+
       - name: Build
         run: pnpm build
         env:

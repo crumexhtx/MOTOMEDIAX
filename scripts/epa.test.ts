@@ -88,4 +88,98 @@ describe("EPA lookup", () => {
     expect(merged?.mpgCity).toBe(53);
     expect(merged?.overallLengthIn).toBe("193");
   });
+
+  it("overwrites mpg when overwriteMpg is set", () => {
+    const merged = mergeEpaIntoSpecs(
+      { mpgCombined: 99 },
+      lookupEpaSummary(index, "Toyota", "Camry", 2025),
+      { overwriteMpg: true },
+    );
+    expect(merged?.mpgCombined).toBe(51);
+  });
+});
+
+describe("EPA performance-variant matching", () => {
+  const index: EpaIndex = {
+    byMakeYear: new Map([
+      [
+        "honda|2025",
+        [
+          row({
+            make: "Honda",
+            model: "Civic Hybrid Sport",
+            baseModel: "Civic",
+            cityMpg: 50,
+            highwayMpg: 47,
+            combinedMpg: 49,
+            atvType: "Hybrid",
+            fuelType: "Regular Gasoline",
+          }),
+          row({
+            make: "Honda",
+            model: "Civic 4Dr",
+            baseModel: "Civic",
+            cityMpg: 30,
+            highwayMpg: 37,
+            combinedMpg: 33,
+            fuelType: "Regular Gasoline",
+          }),
+          row({
+            make: "Honda",
+            model: "Civic 5Dr",
+            baseModel: "Civic",
+            cityMpg: 22,
+            highwayMpg: 28,
+            combinedMpg: 24,
+            fuelType: "Premium Gasoline",
+          }),
+          row({
+            make: "Honda",
+            model: "Civic 5Dr",
+            baseModel: "Civic",
+            cityMpg: 30,
+            highwayMpg: 37,
+            combinedMpg: 33,
+            fuelType: "Regular Gasoline",
+          }),
+        ],
+      ],
+      [
+        "hyundai|2025",
+        [
+          row({
+            make: "Hyundai",
+            model: "Elantra Hybrid Blue",
+            baseModel: "Elantra",
+            cityMpg: 51,
+            highwayMpg: 58,
+            combinedMpg: 54,
+            atvType: "Hybrid",
+            fuelType: "Regular Gasoline",
+          }),
+          row({
+            make: "Hyundai",
+            model: "Elantra N",
+            baseModel: "Elantra N",
+            cityMpg: 20,
+            highwayMpg: 29,
+            combinedMpg: 23,
+            fuelType: "Premium Gasoline",
+          }),
+        ],
+      ],
+    ]),
+  };
+
+  it("maps Civic Type R to premium Civic 5Dr, not hybrid", () => {
+    const s = lookupEpaSummary(index, "Honda", "Civic Type R", 2025);
+    expect(s?.mpgCombined).toBe(24);
+    expect(s?.electrificationLevel).toBeUndefined();
+  });
+
+  it("does not assign Elantra Hybrid mpg to Elantra N", () => {
+    const s = lookupEpaSummary(index, "Hyundai", "Elantra N", 2025);
+    expect(s?.mpgCombined).toBe(23);
+    expect(s?.electrificationLevel).toBeUndefined();
+  });
 });

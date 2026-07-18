@@ -23,7 +23,16 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { make, model } = found;
   const title = `${make.name} ${model.name} photos & years`;
   const description = `${model.tagline} Browse ${make.name} ${model.name} model years and galleries on motomediax.`;
-  const image = model.years[0]?.images[0];
+  const newest = [...model.years].sort((a, b) => b.year - a.year)[0];
+  const image = newest?.images[0];
+  const ogImage = image
+    ? {
+        url: image.src.startsWith("http")
+          ? image.src
+          : absoluteUrl(image.src),
+        alt: image.alt,
+      }
+    : undefined;
 
   return {
     title,
@@ -33,7 +42,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       url: absoluteUrl(`/makes/${make.slug}/${model.slug}`),
-      ...(image ? { images: [{ url: image.src, alt: image.alt }] } : {}),
+      ...(ogImage ? { images: [ogImage] } : {}),
     },
   };
 }
@@ -95,7 +104,7 @@ export default async function ModelPage({ params }: Props) {
                 title={`${year.year} ${make.name} ${model.name}`}
                 subtitle={`${year.summary}${
                   year.specs?.overallRating
-                    ? ""
+                    ? ` · NHTSA ${year.specs.overallRating}/5`
                     : year.highlights?.[0]
                       ? ` · ${year.highlights[0]}`
                       : ""

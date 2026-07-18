@@ -263,6 +263,7 @@ function cachePath(key: string): string {
 async function cachedJson<T>(
   key: string,
   fetcher: () => Promise<T>,
+  options: { cacheNull?: boolean } = {},
 ): Promise<T> {
   ensureDir(CACHE_DIR);
   const file = cachePath(key);
@@ -270,6 +271,10 @@ async function cachedJson<T>(
     return JSON.parse(fs.readFileSync(file, "utf8")) as T;
   }
   const data = await fetcher();
+  // Avoid permanently caching transient network failures as "missing".
+  if (data == null && options.cacheNull === false) {
+    return data;
+  }
   fs.writeFileSync(file, JSON.stringify(data));
   return data;
 }
@@ -296,12 +301,36 @@ async function fetchJson<T>(url: string): Promise<T | null> {
 
 async function fetchWikiSummary(title: string): Promise<WikiSummary | null> {
   const encoded = encodeURIComponent(title.replace(/ /g, "_"));
-  return cachedJson(`wiki:${title}`, async () => {
-    const data = await fetchJson<WikiSummary>(
-      `https://en.wikipedia.org/api/rest_v1/page/summary/${encoded}`,
-    );
-    return data ?? { title, extract: "", type: "missing" };
+  const file = cachePath(`wiki:${title}`);
+  if (fs.existsSync(file)) {
+    return JSON.parse(fs.readFileSync(file, "utf8")) as WikiSummary;
+  }
+
+  const encodedUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encoded}`;
+  await sleep(120);
+  const res = await fetch(encodedUrl, {
+    headers: {
+      "User-Agent": USER_AGENT,
+      Accept: "application/json",
+    },
   });
+
+  // Real 404 → cache a missing stub. Transient errors → do not cache.
+  if (res.status === 404) {
+    const missing: WikiSummary = { title, extract: "", type: "missing" };
+    ensureDir(CACHE_DIR);
+    fs.writeFileSync(file, JSON.stringify(missing));
+    return missing;
+  }
+  if (!res.ok) {
+    console.warn(`HTTP ${res.status} for ${encodedUrl} (not cached)`);
+    return null;
+  }
+
+  const data = (await res.json()) as WikiSummary;
+  ensureDir(CACHE_DIR);
+  fs.writeFileSync(file, JSON.stringify(data));
+  return data;
 }
 
 async function resolveWiki(

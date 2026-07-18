@@ -4,7 +4,7 @@ import {
   type ModelEntry,
   type YearEntry,
 } from "@/data/catalog";
-import { getCatalog } from "@/data/catalog.server";
+import { getCatalog, publicAssetExists } from "@/data/catalog.server";
 import { enrichYearEntry } from "@/lib/trims";
 
 export type SearchResult = {
@@ -21,6 +21,28 @@ function normSlug(slug: string) {
   } catch {
     return slug.toLowerCase();
   }
+}
+
+function brandFallback(make: MakeEntry): GalleryImage {
+  return {
+    src: `/brands/${make.slug}.svg`,
+    alt: `${make.name} badge`,
+    width: 128,
+    height: 128,
+  };
+}
+
+/** Prefer an image that exists on disk (or is remote); otherwise undefined. */
+function usableImage(image?: GalleryImage): GalleryImage | undefined {
+  if (!image?.src) return undefined;
+  if (image.src.endsWith(".svg")) return image;
+  if (publicAssetExists(image.src)) return image;
+  return undefined;
+}
+
+function newestYear(model: ModelEntry): YearEntry | undefined {
+  if (!model.years.length) return undefined;
+  return [...model.years].sort((a, b) => b.year - a.year)[0];
 }
 
 export function getAllMakes(): MakeEntry[] {
@@ -62,11 +84,12 @@ export function getYear(
   const found = getModel(makeSlug, modelSlug);
   if (!found) return undefined;
   const key = normSlug(yearSlug);
+  // Years on `found.model` are already enriched by getModel.
   const year = found.model.years.find((y) => y.slug === key);
   if (!year) return undefined;
   return {
     ...found,
-    year: enrichYearEntry(found.make.slug, found.model.slug, year),
+    year,
   };
 }
 
@@ -82,8 +105,8 @@ export function getLatestEntries(limit = 8) {
   for (const make of getCatalog()) {
     for (const model of make.models) {
       for (const year of model.years) {
-        const image = year.images[0];
-        if (!image?.src || image.src.endsWith(".svg")) continue;
+        const image = usableImage(year.images[0]);
+        if (!image || image.src.endsWith(".svg")) continue;
         entries.push({
           make,
           model,
@@ -109,13 +132,15 @@ export function getHeroBackdropImages(limit = 6): GalleryImage[] {
   for (const make of getCatalog()) {
     for (const model of make.models) {
       if (seenMakes.has(make.slug)) break;
-      for (const year of model.years) {
+      // Newest year first for a current look.
+      const years = [...model.years].sort((a, b) => b.year - a.year);
+      for (const year of years) {
         if (seenMakes.has(make.slug)) break;
         const enriched = enrichYearEntry(make.slug, model.slug, year);
-        const image = enriched.images.find(
-          (img) =>
-            img?.src?.startsWith("/catalog/") && !img.src.endsWith(".svg"),
-        );
+        const image = enriched.images.find((img) => {
+          if (!img?.src || img.src.endsWith(".svg")) return false;
+          return publicAssetExists(img.src);
+        });
         if (!image) continue;
         seenMakes.add(make.slug);
         picked.push({
@@ -145,21 +170,36 @@ function firstCarImage(
   model?: ModelEntry,
 ): GalleryImage | undefined {
   if (model) {
-    for (const year of model.years) {
-      const img = year.images[0];
-      if (img?.src && !img.src.endsWith(".svg")) return img;
+    const years = [...model.years].sort((a, b) => b.year - a.year);
+    for (const year of years) {
+      const img = usableImage(year.images[0]);
+      if (img && !img.src.endsWith(".svg")) return img;
     }
   }
   for (const m of make.models) {
-    for (const year of m.years) {
-      const img = year.images[0];
-      if (img?.src && !img.src.endsWith(".svg")) return img;
+    const years = [...m.years].sort((a, b) => b.year - a.year);
+    for (const year of years) {
+      const img = usableImage(year.images[0]);
+      if (img && !img.src.endsWith(".svg")) return img;
     }
   }
   return undefined;
 }
 
-export function searchCatalog(query: string): SearchResult[] {
+/** Newest-year card image for a model, with brand badge fallback. */
+export function modelCardImage(
+  make: MakeEntry,
+  model: ModelEntry,
+): GalleryImage {
+  const year = newestYear(model);
+  return (
+    usableImage(year?.images[0]) ??
+    firstCarImage(make, model) ??
+    brandFallback(make)
+  );
+}
+
+export function searchCatalog(query: string, limit = 40): SearchResult[] {
   const q = query.trim().toLowerCase();
   if (!q) return [];
 
@@ -173,7 +213,7 @@ export function searchCatalog(query: string): SearchResult[] {
       (make.name.toLowerCase().includes(q) ||
         make.country.toLowerCase().includes(q))
     ) {
-      const image = firstCarImage(make) ?? make.coverImage;
+      const image = firstCarImage(make) ?? brandFallback(make);
       results.push({
         type: "make",
         title: make.name,
@@ -191,7 +231,7 @@ export function searchCatalog(query: string): SearchResult[] {
           `${make.name} ${model.name}`.toLowerCase().includes(q));
 
       if (modelMatch) {
-        const image = firstCarImage(make, model) ?? make.coverImage;
+        const image = modelCardImage(make, model);
         results.push({
           type: "model",
           title: `${make.name} ${model.name}`,
@@ -213,10 +253,11 @@ export function searchCatalog(query: string): SearchResult[] {
         }
 
         if (yearHit) {
+          const yearImage = usableImage(year.images[0]);
           const image =
-            year.images[0] && !year.images[0].src.endsWith(".svg")
-              ? year.images[0]
-              : (firstCarImage(make, model) ?? make.coverImage);
+            yearImage && !yearImage.src.endsWith(".svg")
+              ? yearImage
+              : (firstCarImage(make, model) ?? brandFallback(make));
           results.push({
             type: "year",
             title: yearLabel,
@@ -229,7 +270,7 @@ export function searchCatalog(query: string): SearchResult[] {
     }
   }
 
-  return results;
+  return results.slice(0, limit);
 }
 
 export function getAllMakeParams() {

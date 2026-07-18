@@ -12,7 +12,6 @@ const catalogPath = path.join(
 type CatalogCache = { mtimeMs: number; data: MakeEntry[] };
 
 declare global {
-  // eslint-disable-next-line no-var
   var __motomediaxCatalogCache: CatalogCache | undefined;
 }
 
@@ -29,4 +28,17 @@ export function getCatalog(): MakeEntry[] {
   const data = JSON.parse(fs.readFileSync(catalogPath, "utf8")) as MakeEntry[];
   globalThis.__motomediaxCatalogCache = { mtimeMs: stat.mtimeMs, data };
   return data;
+}
+
+/** True when a site-relative `/…` asset exists under `public/`. Remotes always pass. */
+export function publicAssetExists(src: string | undefined | null): boolean {
+  if (!src) return false;
+  if (/^https?:\/\//i.test(src)) return true;
+  if (!src.startsWith("/")) return false;
+  try {
+    const abs = path.join(process.cwd(), "public", src.replace(/^\//, ""));
+    return fs.existsSync(abs) && fs.statSync(abs).size > 500;
+  } catch {
+    return false;
+  }
 }

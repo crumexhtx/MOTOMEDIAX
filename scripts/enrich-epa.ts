@@ -50,20 +50,21 @@ async function main() {
         );
         if (!epa) continue;
         hits += 1;
-        year.specs = mergeEpaIntoSpecs(year.specs, epa) as Record<
-          string,
-          unknown
-        >;
+        // Overwrite prior MPG so corrected lookups replace hybrid parent bleed.
+        year.specs = mergeEpaIntoSpecs(year.specs, epa, {
+          overwriteMpg: true,
+        }) as Record<string, unknown>;
         year.sources = {
           ...year.sources,
           epa: "https://www.fueleconomy.gov/feg/download.shtml",
         };
 
-        if (epa.mpgCombined && year.highlights) {
+        if (epa.mpgCombined) {
           const label = `EPA combined ${epa.mpgCombined} mpg`;
-          if (!year.highlights.includes(label)) {
-            year.highlights = [...year.highlights, label].slice(0, 8);
-          }
+          const rest = (year.highlights ?? []).filter(
+            (h) => !/^EPA combined \d+ mpg$/i.test(h),
+          );
+          year.highlights = [...rest, label].slice(0, 8);
         }
       }
     }

@@ -14,7 +14,7 @@ Car photo catalog inspired by NetCarShow’s make → model → year browse mode
 ```bash
 pnpm install
 cp .env.example .env.local
-pnpm build:catalog   # first time, or after changing brands.json
+pnpm build:catalog   # first time, or after changing brands.json — also fills public/catalog/
 pnpm dev:clean       # clears .next then starts (use if routes 404 after catalog rebuild)
 ```
 
@@ -25,8 +25,11 @@ Set `NEXT_PUBLIC_SITE_URL` to your local or preview origin so canonicals, sitema
 ## Catalog data
 
 - Seed list: [`src/data/brands.json`](src/data/brands.json)
-- Generated catalog: [`src/data/catalog.generated.json`](src/data/catalog.generated.json) (loaded by [`src/data/catalog.ts`](src/data/catalog.ts))
+- Generated catalog: [`src/data/catalog.generated.json`](src/data/catalog.generated.json) (loaded by [`src/data/catalog.server.ts`](src/data/catalog.server.ts))
+- Downloaded photos: `public/catalog/` (gitignored — regenerate with `pnpm build:catalog`)
 - Rebuild: `pnpm build:catalog` (caches API responses under `scripts/.cache/`)
+- Refresh MPG only: `pnpm enrich:epa`
+- If local photos are missing and you cannot re-download them: `pnpm backfill:images` rewrites those entries to Wikimedia URLs
 
 ## Build
 
@@ -45,7 +48,7 @@ pnpm validate:catalog
 pnpm audit:images
 ```
 
-`pnpm validate:catalog` checks brand coverage, year range, and image hosts. `pnpm audit:images` probes remote image URLs (may rate-limit against Wikimedia). CI runs lint, unit tests, production build, and Gitleaks on push/PR.
+`pnpm validate:catalog` checks brand coverage, year range, image hosts, and whether local `/catalog/` files exist on disk (warns by default; set `REQUIRE_LOCAL_IMAGES=1` to fail). `pnpm audit:images` probes remote image URLs (may rate-limit against Wikimedia). CI runs Gitleaks, lint, unit tests, catalog validation, and a production build on push/PR.
 
 ## Routes
 
@@ -66,7 +69,9 @@ Overviews and photos are sourced from Wikipedia/Wikimedia Commons; vehicle specs
 - Deploy on Vercel (or any Node host that supports Next.js).
 - Set `NEXT_PUBLIC_SITE_URL` to the production domain (for example `https://motomediax.com`).
 - Preview deployments should use the preview URL so metadata does not point at production.
-- Commit `catalog.generated.json` (or run `pnpm build:catalog` in CI) so builds have catalog data.
+- Commit `catalog.generated.json`. Photos under `public/catalog/` are gitignored — either:
+  - set the install/build command to `pnpm build:catalog && pnpm build`, or
+  - run `pnpm backfill:images` so the committed JSON uses remote Wikimedia URLs when locals are absent.
 
 ## Security note
 

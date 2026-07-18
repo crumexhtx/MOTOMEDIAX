@@ -170,10 +170,11 @@ export function YearDetailPanel({
                   key={t.id}
                   type="button"
                   onClick={() => setTrimId(t.id)}
+                  aria-pressed={active}
                   className={
                     active
-                      ? "flex max-w-[11rem] flex-col overflow-hidden rounded-md border border-accent bg-[var(--accent-soft)] text-left text-sm"
-                      : "flex max-w-[11rem] flex-col overflow-hidden rounded-md border border-line bg-elevated/50 text-left text-sm text-muted transition hover:border-accent/50 hover:text-foreground"
+                      ? "focus-ring flex max-w-[11rem] flex-col overflow-hidden rounded-md border border-accent bg-[var(--accent-soft)] text-left text-sm"
+                      : "focus-ring flex max-w-[11rem] flex-col overflow-hidden rounded-md border border-line bg-elevated/50 text-left text-sm text-muted transition hover:border-accent/50 hover:text-foreground"
                   }
                 >
                   {t.image ? (
@@ -405,7 +406,8 @@ export function YearDetailPanel({
                         <button
                           type="button"
                           onClick={() => setTrimId(t.id)}
-                          className="text-left underline-offset-2 hover:underline"
+                          aria-pressed={active}
+                          className="focus-ring text-left underline-offset-2 hover:underline"
                         >
                           {t.name}
                         </button>

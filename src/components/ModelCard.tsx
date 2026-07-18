@@ -76,6 +76,7 @@ export function YearChips({
           <li key={year.slug}>
             <Link
               href={href}
+              aria-current={active ? "page" : undefined}
               className={`focus-ring inline-flex rounded-md border px-3 py-1.5 text-sm transition ${
                 active
                   ? "border-accent bg-accent/15 text-foreground"

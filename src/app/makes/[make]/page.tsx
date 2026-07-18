@@ -6,6 +6,7 @@ import { ModelCard } from "@/components/ModelCard";
 import {
   getAllMakeParams,
   getMake,
+  modelCardImage,
   modelHref,
 } from "@/lib/catalog";
 import { JsonLd, absoluteUrl, breadcrumbJsonLd } from "@/lib/seo";
@@ -86,7 +87,7 @@ export default async function MakePage({ params }: Props) {
                 href={modelHref(make.slug, model.slug)}
                 title={model.name}
                 subtitle={`${model.tagline} · ${model.years.length} year${model.years.length === 1 ? "" : "s"}`}
-                image={model.years[0]?.images[0]}
+                image={modelCardImage(make, model)}
               />
             </li>
           ))}

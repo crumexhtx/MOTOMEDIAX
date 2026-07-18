@@ -121,18 +121,17 @@ function pickDefaultTrim(performance: YearPerformance): TrimSpec | undefined {
   return performance.trims[0];
 }
 
-/** Copy trim efficiency into NHTSA specs when those fields are empty. */
+/** Merge trim efficiency into NHTSA specs (trim MPG wins when present). */
 function mergeTrimIntoSpecs(
   specs: VehicleSpecs | undefined,
   trim: TrimSpec | undefined,
 ): VehicleSpecs | undefined {
   if (!trim) return specs;
   const next: VehicleSpecs = { ...(specs ?? {}) };
-  if (next.mpgCity == null && trim.mpgCity != null) next.mpgCity = trim.mpgCity;
-  if (next.mpgHighway == null && trim.mpgHighway != null)
-    next.mpgHighway = trim.mpgHighway;
-  if (next.mpgCombined == null && trim.mpgCombined != null)
-    next.mpgCombined = trim.mpgCombined;
+  // Curated trim MPG is authoritative for the default trim (fixes EPA parent bleed).
+  if (trim.mpgCity != null) next.mpgCity = trim.mpgCity;
+  if (trim.mpgHighway != null) next.mpgHighway = trim.mpgHighway;
+  if (trim.mpgCombined != null) next.mpgCombined = trim.mpgCombined;
   if (next.batteryKwh == null && trim.batteryKwh != null)
     next.batteryKwh = trim.batteryKwh;
   if (next.rangeMiles == null && trim.rangeMiles != null)

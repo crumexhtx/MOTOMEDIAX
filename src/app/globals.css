@@ -103,6 +103,11 @@ a {
   .make-tile:hover img {
     transform: none;
   }
+
+  .group:hover img,
+  .group-hover\:scale-\[1\.03\] {
+    transform: none !important;
+  }
 }
 
 .sr-only {
