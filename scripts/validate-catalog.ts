@@ -72,6 +72,9 @@ for (const make of catalog) {
 }
 
 const imageHosts = new Map<string, number>();
+const missingLocal = new Set<string>();
+const requireLocalImages = process.env.REQUIRE_LOCAL_IMAGES === "1";
+
 for (const make of catalog) {
   for (const model of make.models) {
     for (const year of model.years) {
@@ -83,6 +86,16 @@ for (const make of catalog) {
               ? "local-brands"
               : "local-other";
           imageHosts.set(kind, (imageHosts.get(kind) ?? 0) + 1);
+
+          const abs = path.join(
+            __dirname,
+            "..",
+            "public",
+            img.src.replace(/^\//, ""),
+          );
+          if (!fs.existsSync(abs) || fs.statSync(abs).size < 500) {
+            missingLocal.add(img.src);
+          }
           continue;
         }
         try {
@@ -93,6 +106,16 @@ for (const make of catalog) {
         }
       }
     }
+  }
+}
+
+if (missingLocal.size > 0) {
+  const sample = [...missingLocal].slice(0, 8).join(", ");
+  const message = `${missingLocal.size} local image file(s) missing under public/ (e.g. ${sample}). Run \`pnpm build:catalog\` (or \`pnpm fetch:trim-images\`) before deploy.`;
+  if (requireLocalImages) {
+    fail(message);
+  } else {
+    warn(message);
   }
 }
 

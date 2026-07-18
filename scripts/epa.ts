@@ -148,7 +148,7 @@ function normalizeKey(value: string): string {
     .replace(/[^a-z0-9]+/g, "");
 }
 
-/** Map catalog display names → EPA search tokens. */
+/** Map catalog display names → EPA search tokens (most-specific first). */
 function catalogModelTokens(modelName: string): string[] {
   const cleaned = modelName
     .replace(/\s*\([^)]*\)\s*/g, " ")
@@ -170,12 +170,17 @@ function catalogModelTokens(modelName: string): string[] {
   if (/^c-class$/i.test(cleaned)) tokens.push("C-Class", "C 300", "C300");
   if (/^3 series$/i.test(cleaned)) tokens.push("3 Series", "330i", "330");
   if (/^wrx/i.test(cleaned)) tokens.push("WRX");
-  if (/elantra n/i.test(cleaned)) tokens.push("Elantra N", "Elantra");
-  if (/civic type r/i.test(cleaned)) tokens.push("Civic Type R", "Civic");
+  // Performance variants: never fall back to the parent model (hybrid MPG bleed).
+  if (/elantra n/i.test(cleaned)) tokens.push("Elantra N");
+  // EPA lists CTR as "Civic 5Dr" + Premium, not "Civic Type R".
+  if (/civic type r/i.test(cleaned)) tokens.push("Civic Type R", "Civic 5Dr");
   if (/^z$/i.test(cleaned)) tokens.push("Z");
   if (/mx-5|miata/i.test(cleaned)) tokens.push("MX-5", "Miata");
 
-  return [...new Set(tokens)];
+  // Prefer longer / more specific tokens so "Civic Type R" wins over "Civic".
+  return [...new Set(tokens)].sort(
+    (a, b) => normalizeKey(b).length - normalizeKey(a).length,
+  );
 }
 
 function epaModelMatches(epaModel: string, epaBase: string, wanted: string): boolean {
@@ -228,6 +233,17 @@ function pickRepresentative(rows: EpaVehicle[]): EpaVehicle {
   );
   const pool = gas.length ? gas : plugIns.length ? plugIns : rows;
   return [...pool].sort((a, b) => b.combinedMpg - a.combinedMpg)[0];
+}
+
+/** Sport / performance models: prefer non-hybrid gas with the lowest combined MPG. */
+function pickSportRepresentative(rows: EpaVehicle[]): EpaVehicle {
+  const gas = rows.filter(
+    (r) =>
+      !(r.atvType || "").toLowerCase().includes("hybrid") &&
+      !(r.fuelType || "").toLowerCase().includes("electricity"),
+  );
+  const pool = gas.length ? gas : rows;
+  return [...pool].sort((a, b) => a.combinedMpg - b.combinedMpg)[0];
 }
 
 export type EpaIndex = {
@@ -327,12 +343,46 @@ export function lookupEpaSummary(
   if (!rows?.length) return undefined;
 
   const tokens = catalogModelTokens(modelName);
-  const matches = rows.filter((r) =>
-    tokens.some((t) => epaModelMatches(r.model, r.baseModel, t)),
-  );
+  // Use the first (most specific) token that matches any EPA row — do not
+  // union with broader parent tokens (e.g. Type R must not pull Civic Hybrid).
+  let matches: EpaVehicle[] = [];
+  for (const token of tokens) {
+    let hit = rows.filter((r) =>
+      epaModelMatches(r.model, r.baseModel, token),
+    );
+    // Civic Type R is a premium-fuel hatch; drop hybrids / 4-door economy rows.
+    if (/civic type r/i.test(modelName)) {
+      const premiumHatch = hit.filter(
+        (r) =>
+          /5dr/i.test(r.model) &&
+          !(r.atvType || "").toLowerCase().includes("hybrid") &&
+          (r.fuelType || "").toLowerCase().includes("premium"),
+      );
+      if (premiumHatch.length) hit = premiumHatch;
+      else {
+        hit = hit.filter(
+          (r) =>
+            !(r.atvType || "").toLowerCase().includes("hybrid") &&
+            r.combinedMpg > 0 &&
+            r.combinedMpg <= 28,
+        );
+      }
+    }
+    if (hit.length) {
+      matches = hit;
+      break;
+    }
+  }
   if (!matches.length) return undefined;
 
-  const rep = pickRepresentative(matches);
+  // For sport variants, prefer the least-efficient gas config (not hybrid).
+  const sportModel =
+    /type r|elantra n|wrx|sti|gt[- ]?r|mustang gt|camaro [sz]|gr corolla|gr86|supra|focus rs|golf r|amg/i.test(
+      modelName,
+    );
+  const rep = sportModel
+    ? pickSportRepresentative(matches)
+    : pickRepresentative(matches);
   const variants = [
     ...new Set(matches.map((m) => m.model).filter(Boolean)),
   ].slice(0, 10);
@@ -361,6 +411,7 @@ export function lookupEpaSummary(
 export function mergeEpaIntoSpecs<T extends Record<string, unknown>>(
   specs: T | undefined,
   epa: EpaYearSummary | undefined,
+  options: { overwriteMpg?: boolean } = {},
 ): T | undefined {
   if (!epa) return specs;
   const next = { ...(specs ?? {}) } as T & {
@@ -373,10 +424,12 @@ export function mergeEpaIntoSpecs<T extends Record<string, unknown>>(
     rangeMiles?: number;
   };
 
-  if (next.mpgCity == null && epa.mpgCity != null) next.mpgCity = epa.mpgCity;
-  if (next.mpgHighway == null && epa.mpgHighway != null)
+  const overwrite = options.overwriteMpg === true;
+  if ((overwrite || next.mpgCity == null) && epa.mpgCity != null)
+    next.mpgCity = epa.mpgCity;
+  if ((overwrite || next.mpgHighway == null) && epa.mpgHighway != null)
     next.mpgHighway = epa.mpgHighway;
-  if (next.mpgCombined == null && epa.mpgCombined != null)
+  if ((overwrite || next.mpgCombined == null) && epa.mpgCombined != null)
     next.mpgCombined = epa.mpgCombined;
   if (!next.driveType && epa.driveType) next.driveType = epa.driveType;
   if (!next.fuelTypePrimary && epa.fuelTypePrimary)

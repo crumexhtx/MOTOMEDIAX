@@ -55,4 +55,15 @@ describe("seo helpers", () => {
       url: `${SITE.url}/makes/ferrari/roma/2021`,
     });
   });
+
+  it("escapes script breakouts in JsonLd payload", async () => {
+    const { JsonLd } = await import("@/lib/seo");
+    const element = JsonLd({
+      data: { description: 'safe</script><script>alert(1)' },
+    });
+    const html = (element.props as { dangerouslySetInnerHTML: { __html: string } })
+      .dangerouslySetInnerHTML.__html;
+    expect(html).toContain("\\u003c/script>");
+    expect(html).not.toContain("</script>");
+  });
 });

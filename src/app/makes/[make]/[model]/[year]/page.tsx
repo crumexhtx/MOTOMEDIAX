@@ -91,7 +91,11 @@ export default async function YearPage({ params }: Props) {
           model: model.name,
           year: year.year,
           description: year.description,
-          image: hero?.src ?? absoluteUrl(`/brands/${make.slug}.svg`),
+          image: hero?.src
+            ? hero.src.startsWith("http")
+              ? hero.src
+              : absoluteUrl(hero.src)
+            : absoluteUrl(`/brands/${make.slug}.svg`),
           path,
         })}
       />

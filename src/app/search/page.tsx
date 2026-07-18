@@ -43,7 +43,7 @@ export default async function SearchPage({ searchParams }: Props) {
         </p>
       </header>
       <div className="mt-10 max-w-3xl">
-        <SearchPanel key={initialQuery} initialQuery={initialQuery} />
+        <SearchPanel initialQuery={initialQuery} />
       </div>
     </div>
   );

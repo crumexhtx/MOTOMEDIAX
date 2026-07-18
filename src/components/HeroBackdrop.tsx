@@ -10,6 +10,11 @@ type Props = {
   intervalMs?: number;
 };
 
+type SlideState = {
+  index: number;
+  prevIndex: number | null;
+};
+
 /**
  * Full-bleed landing backdrop that crossfades between catalog photos.
  * Only mounts prev/active/next so the first paint stays light.
@@ -17,8 +22,10 @@ type Props = {
  */
 export function HeroBackdrop({ images, intervalMs = 7000 }: Props) {
   const slides = images.filter((img) => Boolean(img?.src));
-  const [index, setIndex] = useState(0);
-  const [prevIndex, setPrevIndex] = useState<number | null>(null);
+  const [{ index, prevIndex }, setSlide] = useState<SlideState>({
+    index: 0,
+    prevIndex: null,
+  });
 
   useEffect(() => {
     if (slides.length < 2) return;
@@ -28,10 +35,10 @@ export function HeroBackdrop({ images, intervalMs = 7000 }: Props) {
     if (reduceMotion) return;
 
     const id = window.setInterval(() => {
-      setIndex((current) => {
-        setPrevIndex(current);
-        return (current + 1) % slides.length;
-      });
+      setSlide(({ index: current }) => ({
+        index: (current + 1) % slides.length,
+        prevIndex: current,
+      }));
     }, intervalMs);
     return () => window.clearInterval(id);
   }, [slides.length, intervalMs]);
@@ -39,7 +46,13 @@ export function HeroBackdrop({ images, intervalMs = 7000 }: Props) {
   // Drop the outgoing slide after the fade finishes.
   useEffect(() => {
     if (prevIndex === null) return;
-    const id = window.setTimeout(() => setPrevIndex(null), 1300);
+    const id = window.setTimeout(() => {
+      setSlide((current) =>
+        current.prevIndex === null
+          ? current
+          : { ...current, prevIndex: null },
+      );
+    }, 1300);
     return () => window.clearTimeout(id);
   }, [prevIndex, index]);
 
@@ -65,7 +78,6 @@ export function HeroBackdrop({ images, intervalMs = 7000 }: Props) {
             alt=""
             fill
             priority={i === 0}
-            loading={i === 0 ? "eager" : "lazy"}
             quality={45}
             sizes="(max-width: 768px) 100vw, 1100px"
             className={
