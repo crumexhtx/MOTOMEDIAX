@@ -69,8 +69,8 @@ Overviews and photos are sourced from Wikipedia/Wikimedia Commons; vehicle specs
 - Deploy on Vercel (or any Node host that supports Next.js).
 - Set `NEXT_PUBLIC_SITE_URL` to the production domain (for example `https://motomediax.com`).
 - Preview deployments should use the preview URL so metadata does not point at production.
-- Commit `catalog.generated.json` and `public/catalog/` so production builds optimize local photos (no live Wikimedia fetch).
-- If you regenerate the catalog without photos, run `pnpm localize:images` before deploying.
+- Commit `src/data/catalog.generated.json`, `src/data/videos/`, and `public/catalog/` so production has catalog data, year videos, and hero/trim photos (no live Wikimedia fetch). Auto.dev / YouTube keys are **not** required at runtime (offline enrichment only).
+- If you regenerate the catalog without photos, run `pnpm localize:images` (or `pnpm fetch:trim-images`) before deploying.
 
 ## Security note
 

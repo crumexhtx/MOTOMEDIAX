@@ -1,10 +1,19 @@
+/** Trust level for catalog / trim photos. */
+export type ImageConfidence = "verified" | "unverified" | "yearOnly";
+
 export type GalleryImage = {
   src: string;
   alt: string;
   width: number;
   height: number;
+  /**
+   * How much we trust this photo for the listed vehicle.
+   * - verified: human-confirmed trim + generation match
+   * - yearOnly: model-year / overview photo (not trim-specific)
+   * - unverified: auto-fetched or unreviewed trim candidate
+   */
+  confidence?: ImageConfidence;
 };
-
 export type VehicleSpecs = {
   make?: string;
   model?: string;
@@ -70,6 +79,8 @@ export type TrimSpec = {
   notes?: string;
   /** Local catalog path for this trim, e.g. /catalog/toyota--camry--hybrid-le.jpg */
   image?: string;
+  /** Trust level for `image` — only `verified` may replace the year hero. */
+  imageConfidence?: ImageConfidence;
 };
 
 export type YearPerformance = {
@@ -81,6 +92,19 @@ export type CatalogSources = {
   wikipedia?: string;
   nhtsa?: string;
   epa?: string;
+  autodev?: string;
+};
+
+/** Optional curated YouTube overview for a model year (embedded, not rehosted). */
+export type YearVideo = {
+  youtubeId: string;
+  title: string;
+  /** Channel or rights holder shown in attribution */
+  owner: string;
+  /** Link to the owner’s channel or profile */
+  ownerUrl?: string;
+  /** Extra clarity when the YouTube title year differs slightly */
+  note?: string;
 };
 
 export type YearEntry = {
@@ -92,6 +116,7 @@ export type YearEntry = {
   images: GalleryImage[];
   specs?: VehicleSpecs;
   performance?: YearPerformance;
+  video?: YearVideo;
   sources?: CatalogSources;
 };
 

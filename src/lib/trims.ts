@@ -1,21 +1,14 @@
 import fs from "node:fs";
 import path from "node:path";
 import type {
+  ImageConfidence,
   TrimSpec,
   VehicleSpecs,
   YearEntry,
   YearPerformance,
 } from "@/data/catalog";
-
-function localCatalogImageExists(src: string): boolean {
-  if (!src.startsWith("/catalog/")) return /^https?:\/\//i.test(src);
-  try {
-    const abs = path.join(process.cwd(), "public", src.replace(/^\//, ""));
-    return fs.existsSync(abs) && fs.statSync(abs).size > 500;
-  } catch {
-    return false;
-  }
-}
+import { suggestTrimImageConfidence } from "@/lib/imageConfidence";
+import { getCuratedYearVideo } from "@/lib/videos";
 import toyotaTrims from "@/data/trims/toyota.json";
 import toyotaImages from "@/data/trims/toyota-images.json";
 import fordTrims from "@/data/trims/ford.json";
@@ -47,13 +40,27 @@ import volkswagenImages from "@/data/trims/volkswagen-images.json";
 import mazdaTrims from "@/data/trims/mazda.json";
 import mazdaImages from "@/data/trims/mazda-images.json";
 
+function localCatalogImageExists(src: string): boolean {
+  if (!src.startsWith("/catalog/")) return /^https?:\/\//i.test(src);
+  try {
+    const abs = path.join(process.cwd(), "public", src.replace(/^\//, ""));
+    return fs.existsSync(abs) && fs.statSync(abs).size > 500;
+  } catch {
+    return false;
+  }
+}
+
 type CuratedByYear = Record<string, YearPerformance>;
 type CuratedByModel = Record<string, CuratedByYear>;
-type TrimImageMap = Record<
-  string,
-  Record<string, { src?: string; alt?: string; query?: string; commonsTitle?: string }>
->;
-
+type TrimImageEntry = {
+  src?: string;
+  alt?: string;
+  query?: string;
+  commonsTitle?: string;
+  /** Human trust mark — only `verified` promotes into the year hero. */
+  confidence?: ImageConfidence;
+};
+type TrimImageMap = Record<string, Record<string, TrimImageEntry>>;
 const CURATED_BY_MAKE: Record<string, CuratedByModel> = {
   toyota: toyotaTrims as CuratedByModel,
   ford: fordTrims as CuratedByModel,
@@ -101,7 +108,7 @@ export function getCuratedPerformance(
   if (!byYear) return undefined;
   const raw = byYear[String(year)];
   if (!raw) return undefined;
-  return attachTrimImages(makeSlug, modelSlug, raw);
+  return attachTrimImages(makeSlug, modelSlug, raw, year);
 }
 
 function modelCatalogPath(makeSlug: string, modelSlug: string): string {
@@ -123,16 +130,28 @@ function attachTrimImages(
   makeSlug: string,
   modelSlug: string,
   performance: YearPerformance,
+  pageYear: number,
 ): YearPerformance {
   const byModel = IMAGE_BY_MAKE[makeSlug.toLowerCase()];
   const byTrim = byModel?.[modelSlug.toLowerCase()];
   return {
     ...performance,
     trims: performance.trims.map((trim) => {
-      const declared = byTrim?.[trim.id]?.src;
-      const src = resolveTrimImageSrc(makeSlug, modelSlug, declared);
+      const img = byTrim?.[trim.id];
+      const src = resolveTrimImageSrc(makeSlug, modelSlug, img?.src);
       if (!src) return trim;
-      return { ...trim, image: src };
+      const imageConfidence = suggestTrimImageConfidence({
+        trimId: trim.id,
+        trimName: trim.name,
+        pageYear,
+        commonsTitle: img?.commonsTitle,
+        explicit: img?.confidence,
+      });
+      return {
+        ...trim,
+        image: src,
+        imageConfidence,
+      };
     }),
   };
 }
@@ -190,28 +209,46 @@ export function enrichYearEntry(
   const curated =
     year.performance ??
     getCuratedPerformance(makeSlug, modelSlug, year.year);
-  if (!curated?.trims?.length) return year;
+  if (!curated?.trims?.length) {
+    return {
+      ...year,
+      video: year.video ?? getCuratedYearVideo(makeSlug, modelSlug, year.year),
+      images: year.images.map((img) => ({
+        ...img,
+        confidence: img.confidence ?? "yearOnly",
+      })),
+    };
+  }
 
   const defaultTrim = pickDefaultTrim(curated);
   const specs = mergeTrimIntoSpecs(year.specs, defaultTrim);
-  let images = year.images;
-  if (defaultTrim?.image) {
+  const yearImages = year.images.map((img) => ({
+    ...img,
+    confidence: img.confidence ?? ("yearOnly" as const),
+  }));
+
+  // Only human-verified trim photos may replace the year hero.
+  let images = yearImages;
+  if (defaultTrim?.image && defaultTrim.imageConfidence === "verified") {
     const trimImg = {
       src: defaultTrim.image,
       alt: `${year.year} ${makeSlug} ${modelSlug} — ${defaultTrim.name}`,
       width: 1280,
       height: 853,
+      confidence: "verified" as const,
     };
     images = [
       trimImg,
-      ...year.images.filter((img) => img.src !== trimImg.src),
+      ...yearImages.filter((img) => img.src !== trimImg.src),
     ];
   }
+
   return {
     ...year,
     performance: curated,
     specs,
     images,
+    video: year.video ?? getCuratedYearVideo(makeSlug, modelSlug, year.year),
     sources: {
       ...year.sources,
       ...(year.sources?.epa

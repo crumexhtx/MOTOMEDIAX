@@ -910,33 +910,18 @@
     }
   },
   "fusion": {
-    "2024": {
-      "defaultTrimId": "legacy",
+    "2020": {
+      "defaultTrimId": "se",
       "trims": [
         {
+          "id": "se",
+          "name": "SE",
+          "notes": "Final U.S. model year for the Fusion sedan."
+        },
+        {
           "id": "legacy",
-          "name": "Fusion (discontinued)",
+          "name": "Fusion (final year)",
           "notes": "U.S. Fusion ended after 2020."
-        }
-      ]
-    },
-    "2025": {
-      "defaultTrimId": "legacy",
-      "trims": [
-        {
-          "id": "legacy",
-          "name": "Fusion (discontinued)",
-          "notes": "Not offered for this model year."
-        }
-      ]
-    },
-    "2026": {
-      "defaultTrimId": "legacy",
-      "trims": [
-        {
-          "id": "legacy",
-          "name": "Fusion (discontinued)",
-          "notes": "Not offered for this model year."
         }
       ]
     }

@@ -47,9 +47,9 @@ catalog-image-audit.json
 
 # catalog build API cache (regenerate with pnpm build:catalog)
 scripts/.cache/
+scripts/__pycache__/
 
-# Prefer committing optimized local photos under public/catalog/ so deploys
+# Local catalog photos under public/catalog/ ARE committed so deploys
 # stay fast without a live Wikimedia download. Regenerate with:
-#   pnpm backfill:images && pnpm localize:images
-# (or pnpm build:catalog). Uncomment the next line only for local scratch dirs:
-# public/catalog/
+#   pnpm build:catalog / pnpm fetch:trim-images / scripts/refresh-brand-heroes.py
+#   (or pnpm backfill:images && pnpm localize:images)

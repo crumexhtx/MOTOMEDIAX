@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import { CatalogImage } from "@/components/CatalogImage";
 import type { TrimSpec, VehicleSpecs, YearPerformance } from "@/data/catalog";
 
 type Props = {
@@ -54,14 +53,16 @@ function Section({
   title,
   children,
   empty,
+  className = "",
 }: {
   title: string;
   children: ReactNode;
   empty?: boolean;
+  className?: string;
 }) {
   if (empty) return null;
   return (
-    <section className="mb-10">
+    <section className={className}>
       <h2 className="font-display text-2xl tracking-tight">{title}</h2>
       <div className="mt-4">{children}</div>
     </section>
@@ -81,7 +82,7 @@ export function YearDetailPanel({
   trimId: controlledTrimId,
   onTrimChange,
 }: Props) {
-  const trims = performance?.trims ?? [];
+  const trims = useMemo(() => performance?.trims ?? [], [performance?.trims]);
   const initialId =
     performance?.defaultTrimId &&
     trims.some((t) => t.id === performance.defaultTrimId)
@@ -162,7 +163,7 @@ export function YearDetailPanel({
           <h2 className="mb-3 text-xs uppercase tracking-[0.16em] text-muted">
             Trim
           </h2>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             {trims.map((t) => {
               const active = t.id === (trim?.id ?? trimId);
               return (
@@ -177,18 +178,7 @@ export function YearDetailPanel({
                       : "focus-ring flex max-w-[11rem] flex-col overflow-hidden rounded-md border border-line bg-elevated/50 text-left text-sm text-muted transition hover:border-accent/50 hover:text-foreground"
                   }
                 >
-                  {t.image ? (
-                    <span className="relative block aspect-[16/10] w-full bg-soft">
-                      <CatalogImage
-                        src={t.image}
-                        alt=""
-                        fill
-                        sizes="176px"
-                        className="object-cover"
-                      />
-                    </span>
-                  ) : null}
-                  <span className="px-3 py-1.5">{t.name}</span>
+                  {t.name}
                 </button>
               );
             })}
@@ -201,7 +191,11 @@ export function YearDetailPanel({
         <p className="mb-6 text-sm text-muted">{trim.notes}</p>
       ) : null}
 
-      <Section title={`${yearLabel} at a glance`} empty={!heroHasStats}>
+      <Section
+        title={`${yearLabel} at a glance`}
+        empty={!heroHasStats}
+        className="mb-10"
+      >
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-5">
           <StatBadge label="Horsepower" value={hp} />
           <StatBadge label="Torque" value={torque} />
@@ -211,169 +205,171 @@ export function YearDetailPanel({
         </div>
       </Section>
 
-      <Section title="Mechanical" empty={!mechHas}>
-        <dl className="max-w-xl">
-          <SpecRow label="Engine" value={trim?.engine ?? null} />
-          <SpecRow label="Aspiration" value={trim?.aspiration ?? null} />
-          <SpecRow label="Transmission" value={trim?.transmission ?? null} />
-          <SpecRow
-            label="Drivetrain"
-            value={trim?.drivetrain ?? specs?.driveType ?? null}
-          />
-          <SpecRow
-            label="Redline"
-            value={fmt(trim?.redlineRpm, " rpm")}
-          />
-          <SpecRow
-            label="Fuel type"
-            value={specs?.fuelTypePrimary ?? null}
-          />
-          <SpecRow
-            label="Electrification"
-            value={specs?.electrificationLevel ?? null}
-          />
-        </dl>
-      </Section>
+      <div className="mb-10 grid gap-10 md:grid-cols-2 md:gap-x-12 md:gap-y-10">
+        <Section title="Mechanical" empty={!mechHas}>
+          <dl>
+            <SpecRow label="Engine" value={trim?.engine ?? null} />
+            <SpecRow label="Aspiration" value={trim?.aspiration ?? null} />
+            <SpecRow label="Transmission" value={trim?.transmission ?? null} />
+            <SpecRow
+              label="Drivetrain"
+              value={trim?.drivetrain ?? specs?.driveType ?? null}
+            />
+            <SpecRow
+              label="Redline"
+              value={fmt(trim?.redlineRpm, " rpm")}
+            />
+            <SpecRow
+              label="Fuel type"
+              value={specs?.fuelTypePrimary ?? null}
+            />
+            <SpecRow
+              label="Electrification"
+              value={specs?.electrificationLevel ?? null}
+            />
+          </dl>
+        </Section>
 
-      <Section title="Dimensions & capacity" empty={!dimHas}>
-        <dl className="max-w-xl">
-          <SpecRow
-            label="Length"
-            value={fmt(specs?.overallLengthIn, " in")}
-          />
-          <SpecRow
-            label="Width"
-            value={fmt(specs?.overallWidthIn, " in")}
-          />
-          <SpecRow
-            label="Height"
-            value={fmt(specs?.overallHeightIn, " in")}
-          />
-          <SpecRow label="Wheelbase" value={fmt(specs?.wheelbaseIn, " in")} />
-          <SpecRow
-            label="Ground clearance"
-            value={fmt(
-              trim?.groundClearanceIn ?? specs?.groundClearanceIn,
-              " in",
-            )}
-          />
-          <SpecRow
-            label="Curb weight"
-            value={fmt(specs?.curbWeightLb ?? trim?.curbWeightLb, " lb")}
-          />
-          <SpecRow
-            label="Seating"
-            value={fmt(trim?.seatingCapacity ?? specs?.seatingCapacity)}
-          />
-          <SpecRow
-            label="Cargo (seats up)"
-            value={fmt(trim?.cargoCuFt ?? specs?.cargoCuFt, " cu ft")}
-          />
-          <SpecRow
-            label="Cargo (seats folded)"
-            value={fmt(
-              trim?.cargoSeatsFoldedCuFt ?? specs?.cargoSeatsFoldedCuFt,
-              " cu ft",
-            )}
-          />
-          <SpecRow
-            label="Towing"
-            value={fmt(trim?.towingLb ?? specs?.towingLb, " lb")}
-          />
-        </dl>
-      </Section>
+        <Section title="Dimensions & capacity" empty={!dimHas}>
+          <dl>
+            <SpecRow
+              label="Length"
+              value={fmt(specs?.overallLengthIn, " in")}
+            />
+            <SpecRow
+              label="Width"
+              value={fmt(specs?.overallWidthIn, " in")}
+            />
+            <SpecRow
+              label="Height"
+              value={fmt(specs?.overallHeightIn, " in")}
+            />
+            <SpecRow label="Wheelbase" value={fmt(specs?.wheelbaseIn, " in")} />
+            <SpecRow
+              label="Ground clearance"
+              value={fmt(
+                trim?.groundClearanceIn ?? specs?.groundClearanceIn,
+                " in",
+              )}
+            />
+            <SpecRow
+              label="Curb weight"
+              value={fmt(specs?.curbWeightLb ?? trim?.curbWeightLb, " lb")}
+            />
+            <SpecRow
+              label="Seating"
+              value={fmt(trim?.seatingCapacity ?? specs?.seatingCapacity)}
+            />
+            <SpecRow
+              label="Cargo (seats up)"
+              value={fmt(trim?.cargoCuFt ?? specs?.cargoCuFt, " cu ft")}
+            />
+            <SpecRow
+              label="Cargo (seats folded)"
+              value={fmt(
+                trim?.cargoSeatsFoldedCuFt ?? specs?.cargoSeatsFoldedCuFt,
+                " cu ft",
+              )}
+            />
+            <SpecRow
+              label="Towing"
+              value={fmt(trim?.towingLb ?? specs?.towingLb, " lb")}
+            />
+          </dl>
+        </Section>
 
-      <Section title="Efficiency" empty={!effHas}>
-        <dl className="max-w-xl">
-          <SpecRow
-            label="City MPG"
-            value={fmt(trim?.mpgCity ?? specs?.mpgCity)}
-          />
-          <SpecRow
-            label="Highway MPG"
-            value={fmt(trim?.mpgHighway ?? specs?.mpgHighway)}
-          />
-          <SpecRow
-            label="Combined MPG"
-            value={fmt(trim?.mpgCombined ?? specs?.mpgCombined)}
-          />
-          <SpecRow
-            label="Battery"
-            value={fmt(trim?.batteryKwh ?? specs?.batteryKwh, " kWh")}
-          />
-          <SpecRow
-            label="Electric range"
-            value={fmt(trim?.rangeMiles ?? specs?.rangeMiles, " mi")}
-          />
-          <SpecRow
-            label="Fuel tank"
-            value={fmt(trim?.fuelTankGal ?? specs?.fuelTankGal, " gal")}
-          />
-        </dl>
-        {epaUrl ? (
-          <p className="mt-3 text-sm text-muted">
-            Efficiency figures are curated / EPA-oriented. Verify on{" "}
-            <a
-              href={epaUrl}
-              className="underline-offset-2 hover:underline"
-              rel="noreferrer"
-              target="_blank"
-            >
-              FuelEconomy.gov
-            </a>
-            .
-          </p>
-        ) : null}
-      </Section>
+        <Section title="Efficiency" empty={!effHas}>
+          <dl>
+            <SpecRow
+              label="City MPG"
+              value={fmt(trim?.mpgCity ?? specs?.mpgCity)}
+            />
+            <SpecRow
+              label="Highway MPG"
+              value={fmt(trim?.mpgHighway ?? specs?.mpgHighway)}
+            />
+            <SpecRow
+              label="Combined MPG"
+              value={fmt(trim?.mpgCombined ?? specs?.mpgCombined)}
+            />
+            <SpecRow
+              label="Battery"
+              value={fmt(trim?.batteryKwh ?? specs?.batteryKwh, " kWh")}
+            />
+            <SpecRow
+              label="Electric range"
+              value={fmt(trim?.rangeMiles ?? specs?.rangeMiles, " mi")}
+            />
+            <SpecRow
+              label="Fuel tank"
+              value={fmt(trim?.fuelTankGal ?? specs?.fuelTankGal, " gal")}
+            />
+          </dl>
+          {epaUrl ? (
+            <p className="mt-3 text-sm text-muted">
+              Efficiency figures are curated / EPA-oriented. Verify on{" "}
+              <a
+                href={epaUrl}
+                className="underline-offset-2 hover:underline"
+                rel="noreferrer"
+                target="_blank"
+              >
+                FuelEconomy.gov
+              </a>
+              .
+            </p>
+          ) : null}
+        </Section>
 
-      <Section title="Safety ratings" empty={!safetyHas}>
-        <dl className="max-w-xl">
-          <SpecRow
-            label="Overall"
-            value={
-              specs?.overallRating ? `${specs.overallRating} / 5` : null
-            }
-          />
-          <SpecRow
-            label="Front crash"
-            value={
-              specs?.frontCrashRating
-                ? `${specs.frontCrashRating} / 5`
-                : null
-            }
-          />
-          <SpecRow
-            label="Side crash"
-            value={
-              specs?.sideCrashRating ? `${specs.sideCrashRating} / 5` : null
-            }
-          />
-          <SpecRow
-            label="Rollover"
-            value={
-              specs?.rolloverRating ? `${specs.rolloverRating} / 5` : null
-            }
-          />
-          <SpecRow
-            label="Rated configuration"
-            value={specs?.vehicleDescription ?? null}
-          />
-        </dl>
-        {nhtsaUrl ? (
-          <p className="mt-3 text-sm text-muted">
-            Safety from{" "}
-            <a
-              href={nhtsaUrl}
-              className="underline-offset-2 hover:underline"
-              rel="noreferrer"
-              target="_blank"
-            >
-              NHTSA
-            </a>
-            ; dimensions from vPIC where available.
-          </p>
-        ) : null}
-      </Section>
+        <Section title="Safety ratings" empty={!safetyHas}>
+          <dl>
+            <SpecRow
+              label="Overall"
+              value={
+                specs?.overallRating ? `${specs.overallRating} / 5` : null
+              }
+            />
+            <SpecRow
+              label="Front crash"
+              value={
+                specs?.frontCrashRating
+                  ? `${specs.frontCrashRating} / 5`
+                  : null
+              }
+            />
+            <SpecRow
+              label="Side crash"
+              value={
+                specs?.sideCrashRating ? `${specs.sideCrashRating} / 5` : null
+              }
+            />
+            <SpecRow
+              label="Rollover"
+              value={
+                specs?.rolloverRating ? `${specs.rolloverRating} / 5` : null
+              }
+            />
+            <SpecRow
+              label="Rated configuration"
+              value={specs?.vehicleDescription ?? null}
+            />
+          </dl>
+          {nhtsaUrl ? (
+            <p className="mt-3 text-sm text-muted">
+              Safety from{" "}
+              <a
+                href={nhtsaUrl}
+                className="underline-offset-2 hover:underline"
+                rel="noreferrer"
+                target="_blank"
+              >
+                NHTSA
+              </a>
+              ; dimensions from vPIC where available.
+            </p>
+          ) : null}
+        </Section>
+      </div>
 
       {trims.length > 0 ? (
         <section className="mb-10">

@@ -19,6 +19,10 @@ const BRANDS_PATH = path.join(ROOT, "src/data/brands.json");
 const OUT_PATH = path.join(ROOT, "src/data/catalog.generated.json");
 
 const YEARS = [2024, 2025, 2026] as const;
+/** Per-model year overrides keyed as `makeSlug/modelSlug` (lowercase). */
+const MODEL_YEARS: Record<string, number[]> = JSON.parse(
+  fs.readFileSync(path.join(ROOT, "src/data/model-years.json"), "utf8"),
+) as Record<string, number[]>;
 const USER_AGENT =
   "motomediax/0.1 (catalog builder; https://github.com/motomediax)";
 
@@ -879,7 +883,10 @@ async function buildCatalog(): Promise<MakeEntry[]> {
       const extract = modelWiki.extract;
       const tagline = modelWiki.tagline || `${seed.brand} ${displayName}`;
 
-      for (const year of YEARS) {
+      const modelSlug = slugify(displayName);
+      const yearList = MODEL_YEARS[`${makeSlug}/${modelSlug}`] ?? [...YEARS];
+
+      for (const year of yearList) {
         const nhtsa = await fetchNhtsaSpecs(seed.brand, modelName, year);
         const epa = lookupEpaSummary(epaIndex, seed.brand, modelName, year);
         if (epa) epaHits += 1;

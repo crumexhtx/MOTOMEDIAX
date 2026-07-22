@@ -29,6 +29,8 @@ type TrimImageSpec = {
   commonsTitle?: string;
   src?: string;
   alt?: string;
+  /** Preserve human marks across re-fetches. Default new downloads to unverified. */
+  confidence?: "verified" | "unverified" | "yearOnly";
 };
 
 type ImageMap = Record<string, Record<string, TrimImageSpec>>;
@@ -238,6 +240,7 @@ async function main() {
 
       spec.src = publicSrc;
       spec.alt = `${BRAND_LABEL} ${model} ${trimId}`.replace(/-/g, " ");
+      if (!spec.confidence) spec.confidence = "unverified";
       ok += 1;
       console.log(`  ✓ ${publicSrc}`);
     }

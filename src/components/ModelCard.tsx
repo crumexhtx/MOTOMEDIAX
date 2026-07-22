@@ -45,7 +45,7 @@ export function ModelCard({
       href={href}
       className="focus-ring group grid overflow-hidden rounded-xl border border-line bg-elevated transition hover:border-accent/50 sm:grid-cols-[180px_1fr]"
     >
-      <div className="relative aspect-[16/10] sm:aspect-auto sm:min-h-[120px]">
+      <div className="relative aspect-[16/10] sm:aspect-auto sm:min-h-[120px] sm:h-full">
         <PhotoOrPlaceholder image={image} title={title} />
       </div>
       <div className="flex flex-col justify-center p-5">

@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { YearChips } from "@/components/ModelCard";
 import { YearExperience } from "@/components/YearExperience";
-import { getAllYearParams, getYear, yearHref } from "@/lib/catalog";
+import { getYear, yearHref } from "@/lib/catalog";
 import {
   JsonLd,
   absoluteUrl,
@@ -15,31 +16,20 @@ type Props = {
   params: Promise<{ make: string; model: string; year: string }>;
 };
 
-/** Allow any catalog slug even if Turbopack cached an older static set. */
 export const dynamicParams = true;
-
-export function generateStaticParams() {
-  return getAllYearParams();
-}
+/** Always resolve from live catalog — avoids stale Turbopack static-param 404s. */
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  await connection();
   const { make: makeSlug, model: modelSlug, year: yearSlug } = await params;
-  const found = getYear(makeSlug, modelSlug, yearSlug);
-  if (!found) return {};
+  const found = getYear(String(makeSlug), String(modelSlug), String(yearSlug));
+  if (!found) return { title: "Not found" };
 
   const { make, model, year } = found;
   const title = `${year.year} ${make.name} ${model.name} photos`;
   const description = year.summary;
-  const defaultTrim = year.performance?.trims.find(
-    (t) => t.id === year.performance?.defaultTrimId,
-  );
-  const image =
-    (defaultTrim?.image
-      ? {
-          src: defaultTrim.image,
-          alt: `${year.year} ${make.name} ${model.name} — ${defaultTrim.name}`,
-        }
-      : undefined) ?? year.images[0];
+  const image = year.images[0];
   const path = yearHref(make.slug, model.slug, year.slug);
 
   return {
@@ -50,9 +40,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       url: absoluteUrl(path),
-      ...(image
-        ? { images: [{ url: image.src, alt: image.alt }] }
-        : {}),
+      ...(image ? { images: [{ url: image.src, alt: image.alt }] } : {}),
     },
     twitter: {
       card: "summary_large_image",
@@ -64,7 +52,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function YearPage({ params }: Props) {
-  const { make: makeSlug, model: modelSlug, year: yearSlug } = await params;
+  await connection();
+  const raw = await params;
+  const makeSlug = String(raw.make ?? "");
+  const modelSlug = String(raw.model ?? "");
+  const yearSlug = String(raw.year ?? "");
+
   const found = getYear(makeSlug, modelSlug, yearSlug);
   if (!found) notFound();
 
@@ -107,6 +100,7 @@ export default async function YearPage({ params }: Props) {
         performance={year.performance}
         specs={year.specs}
         baseImages={year.images}
+        video={year.video}
         nhtsaUrl={year.sources?.nhtsa}
         epaUrl={year.sources?.epa}
         breadcrumbs={
