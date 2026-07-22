@@ -47,6 +47,8 @@ catalog-image-audit.json
 
 # catalog build API cache (regenerate with pnpm build:catalog)
 scripts/.cache/
+scripts/__pycache__/
 
-# downloaded Wikimedia photos (regenerate with pnpm build:catalog)
-public/catalog/
+# Local catalog photos under public/catalog/ ARE committed so deploys
+# have heroes/trims without a rebuild step. Regenerate with:
+# pnpm build:catalog / pnpm fetch:trim-images / scripts/refresh-brand-heroes.py

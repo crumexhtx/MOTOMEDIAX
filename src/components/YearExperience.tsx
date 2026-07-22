@@ -2,13 +2,13 @@
 
 import { useMemo, useState, type ReactNode } from "react";
 import { CatalogImage } from "@/components/CatalogImage";
-import { Gallery } from "@/components/Gallery";
 import { YearDetailPanel } from "@/components/YearDetailPanel";
+import { YearVideoEmbed } from "@/components/YearVideoEmbed";
 import type {
   GalleryImage,
-  TrimSpec,
   VehicleSpecs,
   YearPerformance,
+  YearVideo,
 } from "@/data/catalog";
 
 type Props = {
@@ -21,22 +21,10 @@ type Props = {
   performance?: YearPerformance;
   specs?: VehicleSpecs;
   baseImages: GalleryImage[];
+  video?: YearVideo;
   nhtsaUrl?: string;
   epaUrl?: string;
 };
-
-function trimToImage(
-  trim: TrimSpec | undefined,
-  fallbackAlt: string,
-): GalleryImage | null {
-  if (!trim?.image) return null;
-  return {
-    src: trim.image,
-    alt: `${fallbackAlt} — ${trim.name}`,
-    width: 1280,
-    height: 853,
-  };
-}
 
 export function YearExperience({
   title,
@@ -48,10 +36,11 @@ export function YearExperience({
   performance,
   specs,
   baseImages,
+  video,
   nhtsaUrl,
   epaUrl,
 }: Props) {
-  const trims = performance?.trims ?? [];
+  const trims = useMemo(() => performance?.trims ?? [], [performance?.trims]);
   const initialId =
     performance?.defaultTrimId &&
     trims.some((t) => t.id === performance.defaultTrimId)
@@ -64,13 +53,7 @@ export function YearExperience({
     [trims, trimId],
   );
 
-  const trimImage = trimToImage(trim, title);
-  const hero = trimImage ?? baseImages[0];
-  const galleryImages = useMemo(() => {
-    if (!trimImage) return baseImages;
-    const rest = baseImages.filter((img) => img.src !== trimImage.src);
-    return [trimImage, ...rest];
-  }, [trimImage, baseImages]);
+  const hero = baseImages[0];
 
   return (
     <article>
@@ -98,11 +81,7 @@ export function YearExperience({
             {summary}
           </p>
           {trim ? (
-            <p className="mt-2 text-sm text-white/65">
-              {trim.image
-                ? `Photo: ${trim.name}`
-                : `Trim: ${trim.name}`}
-            </p>
+            <p className="mt-2 text-sm text-white/65">Trim: {trim.name}</p>
           ) : null}
         </div>
       </div>
@@ -117,6 +96,8 @@ export function YearExperience({
 
         {overview}
 
+        {video ? <YearVideoEmbed video={video} /> : null}
+
         <YearDetailPanel
           yearLabel={yearLabel}
           performance={performance}
@@ -126,20 +107,6 @@ export function YearExperience({
           trimId={trimId}
           onTrimChange={setTrimId}
         />
-
-        <section>
-          <h2 className="mb-5 font-display text-2xl tracking-tight">
-            Photo gallery
-          </h2>
-          {galleryImages.length > 0 ? (
-            <Gallery key={galleryImages[0]?.src} images={galleryImages} />
-          ) : (
-            <p className="text-muted">
-              No Wikimedia photo available for this model yet. Overview and
-              specs are still listed above.
-            </p>
-          )}
-        </section>
       </div>
     </article>
   );

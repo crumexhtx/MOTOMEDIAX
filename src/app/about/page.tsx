@@ -37,8 +37,10 @@ export default function AboutPage() {
           Catalog entries are built from Wikipedia/Wikimedia (photos and
           overviews) and NHTSA (availability and safety ratings where
           available), covering recent model years for a curated set of popular
-          brands. Imagery and text are attributed on vehicle pages. Content is
-          best-effort and may not match a specific trim or model year photo.
+          brands. Some year pages embed a YouTube overview video; those clips
+          remain owned by their uploaders and are credited on the page. Imagery
+          and text are attributed on vehicle pages. Content is best-effort and
+          may not match a specific trim or model year photo.
         </p>
         <p className="mt-4 leading-relaxed text-muted">
           Not affiliated with Wikipedia, NHTSA, NetCarShow, or any vehicle

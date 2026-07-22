@@ -49,7 +49,8 @@ export function SiteFooter() {
               >
                 NHTSA
               </a>
-              . Not affiliated with manufacturers.
+              . Year videos are embedded from YouTube and credited to their
+              owners on each page. Not affiliated with manufacturers.
             </p>
           </div>
         </div>

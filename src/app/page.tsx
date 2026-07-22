@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { HeroBackdrop } from "@/components/HeroBackdrop";
 import { CatalogImage } from "@/components/CatalogImage";
 import { MakeGrid } from "@/components/MakeGrid";
@@ -16,23 +16,23 @@ export default function HomePage() {
 
   return (
     <>
-      <section className="relative min-h-[100svh] overflow-hidden">
+      <section className="relative min-h-[35svh] overflow-hidden">
         <HeroBackdrop images={backdropImages} />
         <div className="absolute inset-0 bg-gradient-to-r from-black/85 via-black/65 to-black/35" />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,rgba(61,156,240,0.22),transparent_45%)]" />
 
-        <div className="container-wide relative flex min-h-[100svh] flex-col justify-end pb-16 pt-28 md:justify-center md:pb-24">
-          <p className="fade-up font-display text-5xl tracking-tight text-white sm:text-6xl md:text-7xl lg:text-8xl">
+        <div className="container-wide relative flex min-h-[35svh] flex-col justify-end pb-8 pt-20 md:justify-center md:pb-10">
+          <p className="fade-up font-display text-3xl tracking-tight text-white sm:text-4xl md:text-5xl lg:text-6xl">
             {SITE.name}
           </p>
-          <h1 className="fade-up-delay mt-5 max-w-2xl text-2xl font-medium leading-tight text-white sm:text-3xl md:text-4xl">
+          <h1 className="fade-up-delay mt-3 max-w-2xl text-lg font-medium leading-tight text-white sm:text-xl md:text-2xl">
             Car photos organized the way you actually browse.
           </h1>
-          <p className="fade-up-delay-2 mt-4 max-w-xl text-base leading-relaxed text-white/75 sm:text-lg">
+          <p className="fade-up-delay-2 mt-2 max-w-xl text-sm leading-relaxed text-white/75">
             Make → model → year, with clearer navigation and pages built for
             search.
           </p>
-          <div className="fade-up-delay-2 mt-8 flex flex-wrap gap-3">
+          <div className="fade-up-delay-2 mt-5 flex flex-wrap gap-3">
             <Link
               href="/makes"
               className="focus-ring inline-flex items-center rounded-md bg-accent px-5 py-3 text-sm font-semibold text-[#071018] transition hover:brightness-110"
