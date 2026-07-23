@@ -13,7 +13,10 @@ jobs:
   quality:
     runs-on: ubuntu-latest
     steps:
+      # Full history so Gitleaks can resolve commit ranges on push/PR.
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: gitleaks/gitleaks-action@v2
         env:

@@ -73,16 +73,19 @@ describe("all curated brands smoke", () => {
     ]);
   });
 
-  it("every catalog make/model/year resolves curated performance", () => {
+  it("every current-window catalog year resolves curated performance", () => {
     const makes = getAllMakes();
     expect(makes.length).toBe(15);
 
     let missing = 0;
     const samples: string[] = [];
+    const currentWindow = new Set([2024, 2025, 2026]);
 
     for (const make of makes) {
       for (const model of make.models) {
         for (const year of model.years) {
+          // Legacy final years from model-years.json are overview-only.
+          if (!currentWindow.has(year.year)) continue;
           const found = getYear(make.slug, model.slug, year.slug);
           expect(found).toBeTruthy();
           const perf = found!.year.performance;

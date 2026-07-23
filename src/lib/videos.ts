@@ -40,6 +40,33 @@ const VIDEOS_BY_MAKE: Record<string, VideosByModel> = {
   mazda: mazdaVideos as VideosByModel,
 };
 
+const YOUTUBE_ID_RE = /^[\w-]{11}$/;
+
+export function isValidYoutubeId(id: string | undefined | null): id is string {
+  return typeof id === "string" && YOUTUBE_ID_RE.test(id);
+}
+
+/** Allow only https links (blocks javascript: and other schemes). */
+export function sanitizeHttpsUrl(url: string | undefined | null): string | undefined {
+  if (!url) return undefined;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "https:") return undefined;
+    return parsed.toString();
+  } catch {
+    return undefined;
+  }
+}
+
+function sanitizeYearVideo(raw: YearVideo): YearVideo | undefined {
+  if (!isValidYoutubeId(raw.youtubeId)) return undefined;
+  return {
+    ...raw,
+    youtubeId: raw.youtubeId,
+    ownerUrl: sanitizeHttpsUrl(raw.ownerUrl),
+  };
+}
+
 export function getCuratedYearVideo(
   makeSlug: string,
   modelSlug: string,
@@ -49,35 +76,49 @@ export function getCuratedYearVideo(
   if (!byModel) return undefined;
   const byYear = byModel[modelSlug.toLowerCase()];
   if (!byYear) return undefined;
-  return byYear[String(year)];
+  const raw = byYear[String(year)];
+  if (!raw) return undefined;
+  return sanitizeYearVideo(raw);
 }
 
 export function youtubeWatchUrl(youtubeId: string): string {
+  if (!isValidYoutubeId(youtubeId)) {
+    throw new Error(`Invalid YouTube id: ${youtubeId}`);
+  }
   return `https://www.youtube.com/watch?v=${youtubeId}`;
 }
 
 export function youtubeEmbedUrl(youtubeId: string): string {
+  if (!isValidYoutubeId(youtubeId)) {
+    throw new Error(`Invalid YouTube id: ${youtubeId}`);
+  }
   return `https://www.youtube-nocookie.com/embed/${youtubeId}`;
 }
 
 export function youtubeThumbUrl(youtubeId: string): string {
+  if (!isValidYoutubeId(youtubeId)) {
+    throw new Error(`Invalid YouTube id: ${youtubeId}`);
+  }
   return `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`;
 }
 
 /** Extract an 11-char YouTube ID from a URL or bare ID. */
 export function parseYoutubeId(input: string): string | undefined {
   const trimmed = input.trim();
-  if (/^[\w-]{11}$/.test(trimmed)) return trimmed;
+  if (YOUTUBE_ID_RE.test(trimmed)) return trimmed;
   try {
     const url = new URL(trimmed);
-    if (url.hostname.includes("youtu.be")) {
+    const host = url.hostname.replace(/^www\./, "").toLowerCase();
+    if (host === "youtu.be") {
       const id = url.pathname.split("/").filter(Boolean)[0];
-      return id && /^[\w-]{11}$/.test(id) ? id : undefined;
+      return id && YOUTUBE_ID_RE.test(id) ? id : undefined;
     }
-    const v = url.searchParams.get("v");
-    if (v && /^[\w-]{11}$/.test(v)) return v;
-    const embed = url.pathname.match(/\/embed\/([\w-]{11})/);
-    if (embed) return embed[1];
+    if (host === "youtube.com" || host === "m.youtube.com" || host === "youtube-nocookie.com") {
+      const v = url.searchParams.get("v");
+      if (v && YOUTUBE_ID_RE.test(v)) return v;
+      const embed = url.pathname.match(/\/embed\/([\w-]{11})/);
+      if (embed) return embed[1];
+    }
   } catch {
     return undefined;
   }

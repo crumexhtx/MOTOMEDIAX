@@ -50,9 +50,11 @@ describe("catalog lookups", () => {
     expect(years.length).toBeGreaterThanOrEqual(models.length);
     expect(makes.every((p) => typeof p.make === "string")).toBe(true);
     expect(years.every((p) => p.make && p.model && p.year)).toBe(true);
-    expect(years.every((p) => ["2024", "2025", "2026"].includes(p.year))).toBe(
-      true,
-    );
+    // Active window is 2024–2026; model-years.json may add curated legacy years.
+    expect(
+      years.every((p) => /^\d{4}$/.test(p.year) && Number(p.year) >= 1990),
+    ).toBe(true);
+    expect(years.some((p) => p.year === "2025")).toBe(true);
   });
 
   it("builds href helpers", () => {
