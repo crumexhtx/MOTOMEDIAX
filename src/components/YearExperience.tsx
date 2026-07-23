@@ -48,11 +48,6 @@ export function YearExperience({
       : trims[0]?.id;
 
   const [trimId, setTrimId] = useState(initialId);
-  const trim = useMemo(
-    () => trims.find((t) => t.id === trimId) ?? trims[0],
-    [trims, trimId],
-  );
-
   const hero = baseImages[0];
 
   return (
@@ -80,9 +75,6 @@ export function YearExperience({
           <p className="mt-3 max-w-2xl text-base text-white/80 md:text-lg">
             {summary}
           </p>
-          {trim ? (
-            <p className="mt-2 text-sm text-white/65">Trim: {trim.name}</p>
-          ) : null}
         </div>
       </div>
 

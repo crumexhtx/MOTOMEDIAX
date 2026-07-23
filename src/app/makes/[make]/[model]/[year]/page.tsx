@@ -1,10 +1,9 @@
 import type { Metadata } from "next";
-import { connection } from "next/server";
 import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/Breadcrumbs";
 import { YearChips } from "@/components/ModelCard";
 import { YearExperience } from "@/components/YearExperience";
-import { getYear, yearHref } from "@/lib/catalog";
+import { getAllYearParams, getYear, yearHref } from "@/lib/catalog";
 import {
   JsonLd,
   absoluteUrl,
@@ -17,20 +16,29 @@ type Props = {
 };
 
 export const dynamicParams = true;
-/** Always resolve from live catalog — avoids stale Turbopack static-param 404s. */
-export const dynamic = "force-dynamic";
+
+export function generateStaticParams() {
+  return getAllYearParams();
+}
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  await connection();
   const { make: makeSlug, model: modelSlug, year: yearSlug } = await params;
   const found = getYear(String(makeSlug), String(modelSlug), String(yearSlug));
   if (!found) return { title: "Not found" };
 
   const { make, model, year } = found;
-  const title = `${year.year} ${make.name} ${model.name} photos`;
+  const title = `${year.year} ${make.name} ${model.name} overview`;
   const description = year.summary;
   const image = year.images[0];
   const path = yearHref(make.slug, model.slug, year.slug);
+  const ogImage = image
+    ? {
+        url: image.src.startsWith("http")
+          ? image.src
+          : absoluteUrl(image.src),
+        alt: image.alt,
+      }
+    : undefined;
 
   return {
     title,
@@ -40,19 +48,18 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title,
       description,
       url: absoluteUrl(path),
-      ...(image ? { images: [{ url: image.src, alt: image.alt }] } : {}),
+      ...(ogImage ? { images: [ogImage] } : {}),
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      ...(image ? { images: [image.src] } : {}),
+      ...(ogImage ? { images: [ogImage.url] } : {}),
     },
   };
 }
 
 export default async function YearPage({ params }: Props) {
-  await connection();
   const raw = await params;
   const makeSlug = String(raw.make ?? "");
   const modelSlug = String(raw.model ?? "");

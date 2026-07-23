@@ -1,7 +1,9 @@
 import { describe, expect, it } from "vitest";
 import {
   getCuratedYearVideo,
+  isValidYoutubeId,
   parseYoutubeId,
+  sanitizeHttpsUrl,
   youtubeWatchUrl,
 } from "@/lib/videos";
 
@@ -12,6 +14,18 @@ describe("videos", () => {
       parseYoutubeId("https://www.youtube.com/watch?v=ZWBfNCv2Vps"),
     ).toBe("ZWBfNCv2Vps");
     expect(parseYoutubeId("https://youtu.be/ymm4Ej0ocBw")).toBe("ymm4Ej0ocBw");
+    expect(parseYoutubeId("https://evil-youtu.be/ZWBfNCv2Vps")).toBeUndefined();
+  });
+
+  it("rejects invalid youtube ids and non-https owner urls", () => {
+    expect(isValidYoutubeId("short")).toBe(false);
+    expect(isValidYoutubeId("ZWBfNCv2Vps")).toBe(true);
+    expect(sanitizeHttpsUrl("javascript:alert(1)")).toBeUndefined();
+    expect(sanitizeHttpsUrl("http://example.com")).toBeUndefined();
+    expect(sanitizeHttpsUrl("https://www.youtube.com/@ToyotaUSA")).toContain(
+      "https://",
+    );
+    expect(() => youtubeWatchUrl("bad")).toThrow(/Invalid YouTube id/);
   });
 
   it("loads curated toyota year videos", () => {

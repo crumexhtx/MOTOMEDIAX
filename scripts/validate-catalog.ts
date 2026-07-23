@@ -3,9 +3,18 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type { MakeEntry } from "../src/data/catalog";
 import brands from "../src/data/brands.json";
+import modelYears from "../src/data/model-years.json";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const YEARS = new Set([2024, 2025, 2026]);
+/** Current production window for active models. */
+const CURRENT_YEARS = new Set([2024, 2025, 2026]);
+/** Discontinued models may keep a curated final year from model-years.json. */
+const LEGACY_YEARS_BY_MODEL = new Map(
+  Object.entries(modelYears as Record<string, number[]>).map(([key, years]) => [
+    key.toLowerCase(),
+    new Set(years),
+  ]),
+);
 
 type Issue = { level: "error" | "warn"; message: string };
 
@@ -56,9 +65,11 @@ for (const make of catalog) {
       fail(`${make.name} ${model.name}: no years`);
     }
     for (const year of model.years) {
-      if (!YEARS.has(year.year)) {
+      const legacyKey = `${make.slug}/${model.slug}`.toLowerCase();
+      const legacyOk = LEGACY_YEARS_BY_MODEL.get(legacyKey)?.has(year.year);
+      if (!CURRENT_YEARS.has(year.year) && !legacyOk) {
         fail(
-          `${make.name} ${model.name} ${year.year}: year outside 2024–2026`,
+          `${make.name} ${model.name} ${year.year}: year outside 2024–2026 and not listed in model-years.json`,
         );
       }
       if (!year.images?.length) {
