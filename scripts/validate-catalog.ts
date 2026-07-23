@@ -104,7 +104,9 @@ for (const make of catalog) {
             "public",
             img.src.replace(/^\//, ""),
           );
-          if (!fs.existsSync(abs) || fs.statSync(abs).size < 500) {
+          // Brand SVGs are tiny; catalog JPEGs should be larger.
+          const minBytes = img.src.startsWith("/brands/") ? 100 : 500;
+          if (!fs.existsSync(abs) || fs.statSync(abs).size < minBytes) {
             missingLocal.add(img.src);
           }
           continue;

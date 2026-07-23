@@ -111,18 +111,9 @@ export function getCuratedPerformance(
   return attachTrimImages(makeSlug, modelSlug, raw, year);
 }
 
-function modelCatalogPath(makeSlug: string, modelSlug: string): string {
-  return `/catalog/${makeSlug.toLowerCase()}--${modelSlug.toLowerCase()}.jpg`;
-}
-
-function resolveTrimImageSrc(
-  makeSlug: string,
-  modelSlug: string,
-  declared?: string,
-): string | undefined {
+function resolveTrimImageSrc(declared?: string): string | undefined {
+  // Do not fall back to model-level heroes — those auto-fetched photos were often wrong.
   if (declared && localCatalogImageExists(declared)) return declared;
-  const fallback = modelCatalogPath(makeSlug, modelSlug);
-  if (localCatalogImageExists(fallback)) return fallback;
   return undefined;
 }
 
@@ -138,7 +129,7 @@ function attachTrimImages(
     ...performance,
     trims: performance.trims.map((trim) => {
       const img = byTrim?.[trim.id];
-      const src = resolveTrimImageSrc(makeSlug, modelSlug, img?.src);
+      const src = resolveTrimImageSrc(img?.src);
       if (!src) return trim;
       const imageConfidence = suggestTrimImageConfidence({
         trimId: trim.id,

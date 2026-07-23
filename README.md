@@ -26,10 +26,10 @@ Set `NEXT_PUBLIC_SITE_URL` to your local or preview origin so canonicals, sitema
 
 - Seed list: [`src/data/brands.json`](src/data/brands.json)
 - Generated catalog: [`src/data/catalog.generated.json`](src/data/catalog.generated.json) (loaded by [`src/data/catalog.server.ts`](src/data/catalog.server.ts))
-- Photos: `public/catalog/` (committed local JPEGs so Next can optimize them; regenerate with `pnpm localize:images`)
+- Photos: trim-specific files under `public/catalog/` (only `verified` trim photos appear as heroes). Model-level auto-fetched heroes were reverted — year pages use brand badges until photos are curated.
 - Rebuild: `pnpm build:catalog` (caches API responses under `scripts/.cache/`)
 - Refresh MPG only: `pnpm enrich:epa`
-- Image pipeline if sources change: `pnpm backfill:images` (remote URLs) → `pnpm localize:images` (download into `public/catalog/`)
+- Do **not** run `backfill:images` / `localize:images` without manually reviewing every match — Wikipedia auto-matching often picks the wrong car/generation.
 
 ## Build
 
