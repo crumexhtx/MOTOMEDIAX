@@ -9,17 +9,62 @@ import {
 } from "@/lib/videos";
 
 type Props = {
-  video: YearVideo;
+  video?: YearVideo;
+  /** Vehicle label used in the coming-soon copy, e.g. "2025 Toyota Camry". */
+  vehicleLabel?: string;
 };
 
-export function YearVideoEmbed({ video }: Props) {
+export function YearVideoEmbed({ video, vehicleLabel }: Props) {
   const [playing, setPlaying] = useState(false);
+
+  if (!video) {
+    const label = vehicleLabel?.trim() || "this model year";
+    return (
+      <section className="mb-12" aria-labelledby="year-video-heading">
+        <h2
+          id="year-video-heading"
+          className="mb-2 font-display text-2xl tracking-tight"
+        >
+          Video
+        </h2>
+        <p className="mb-4 max-w-2xl text-sm text-muted">
+          We embed owner or review videos when a good match is available.
+        </p>
+
+        <div className="overflow-hidden rounded-lg border border-dashed border-line bg-elevated/60">
+          <div className="relative flex aspect-video w-full flex-col items-center justify-center gap-3 bg-soft px-6 text-center">
+            <span
+              className="flex h-14 w-14 items-center justify-center rounded-full border border-line bg-elevated text-muted"
+              aria-hidden
+            >
+              <svg viewBox="0 0 24 24" className="ml-0.5 h-6 w-6 fill-current">
+                <path d="M8 5v14l11-7z" />
+              </svg>
+            </span>
+            <p className="font-display text-xl tracking-tight text-foreground">
+              Video coming soon
+            </p>
+            <p className="max-w-md text-sm text-muted">
+              A curated YouTube video for {label} is on the way. Check back
+              shortly — specs and photos below are ready now.
+            </p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   const watchUrl = youtubeWatchUrl(video.youtubeId);
   const thumb = youtubeThumbUrl(video.youtubeId);
 
   return (
-    <section className="mb-12">
-      <h2 className="mb-2 font-display text-2xl tracking-tight">Video</h2>
+    <section className="mb-12" aria-labelledby="year-video-heading">
+      <h2
+        id="year-video-heading"
+        className="mb-2 font-display text-2xl tracking-tight"
+      >
+        Video
+      </h2>
       <p className="mb-4 max-w-2xl text-sm text-muted">
         Embedded from YouTube. We do not host or claim ownership of this video.
       </p>

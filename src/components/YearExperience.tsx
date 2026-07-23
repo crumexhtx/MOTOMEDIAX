@@ -88,7 +88,7 @@ export function YearExperience({
 
         {overview}
 
-        {video ? <YearVideoEmbed video={video} /> : null}
+        <YearVideoEmbed video={video} vehicleLabel={title} />
 
         <YearDetailPanel
           yearLabel={yearLabel}
