@@ -105,14 +105,20 @@ export function getLatestEntries(limit = 8) {
   for (const make of getCatalog()) {
     for (const model of make.models) {
       for (const year of model.years) {
-        const image = usableImage(year.images[0]);
-        if (!image || image.src.endsWith(".svg")) continue;
+        // Prefer verified trim heroes only — auto-fetched model photos were often wrong.
+        const enriched = enrichYearEntry(make.slug, model.slug, year);
+        const verified = enriched.images.find(
+          (img) =>
+            img.confidence === "verified" &&
+            usableImage(img) &&
+            !img.src.endsWith(".svg"),
+        );
         entries.push({
           make,
           model,
-          year,
+          year: enriched,
           href: yearHref(make.slug, model.slug, year.slug),
-          image,
+          image: verified ?? brandFallback(make),
         });
       }
     }
@@ -123,24 +129,28 @@ export function getLatestEntries(limit = 8) {
     .slice(0, limit);
 }
 
-/** Diverse local catalog photos for the landing hero (one per make). */
+/**
+ * Landing hero backdrop photos. Only human-verified trim photos are used —
+ * Wikipedia auto-matches were frequently the wrong car/generation.
+ */
 export function getHeroBackdropImages(limit = 6): GalleryImage[] {
   const picked: GalleryImage[] = [];
   const seenMakes = new Set<string>();
 
-  // Prefer enriched year pages so default-trim photos win when present.
   for (const make of getCatalog()) {
     for (const model of make.models) {
       if (seenMakes.has(make.slug)) break;
-      // Newest year first for a current look.
       const years = [...model.years].sort((a, b) => b.year - a.year);
       for (const year of years) {
         if (seenMakes.has(make.slug)) break;
         const enriched = enrichYearEntry(make.slug, model.slug, year);
-        const image = enriched.images.find((img) => {
-          if (!img?.src || img.src.endsWith(".svg")) return false;
-          return publicAssetExists(img.src);
-        });
+        const image = enriched.images.find(
+          (img) =>
+            img?.confidence === "verified" &&
+            img.src &&
+            !img.src.endsWith(".svg") &&
+            publicAssetExists(img.src),
+        );
         if (!image) continue;
         seenMakes.add(make.slug);
         picked.push({
@@ -152,62 +162,30 @@ export function getHeroBackdropImages(limit = 6): GalleryImage[] {
     if (picked.length >= limit) break;
   }
 
-  if (picked.length >= Math.min(2, limit)) return picked.slice(0, limit);
-
-  // Fallback: any non-SVG photos from latest entries.
-  for (const entry of getLatestEntries(24)) {
-    if (picked.some((p) => p.src === entry.image.src)) continue;
-    if (entry.image.src.endsWith(".svg")) continue;
-    picked.push(entry.image);
-    if (picked.length >= limit) break;
-  }
-
   return picked.slice(0, limit);
 }
 
-function firstCarImage(
-  make: MakeEntry,
-  model?: ModelEntry,
-): GalleryImage | undefined {
-  if (model) {
-    const years = [...model.years].sort((a, b) => b.year - a.year);
-    for (const year of years) {
-      const img = usableImage(year.images[0]);
-      if (img && !img.src.endsWith(".svg")) return img;
-    }
-  }
-  for (const m of make.models) {
-    const years = [...m.years].sort((a, b) => b.year - a.year);
-    for (const year of years) {
-      const img = usableImage(year.images[0]);
-      if (img && !img.src.endsWith(".svg")) return img;
-    }
-  }
-  return undefined;
-}
-
-/** Newest-year card image for a model, with brand badge fallback. */
+/** Newest-year card image — brand badge unless a verified trim photo exists. */
 export function modelCardImage(
   make: MakeEntry,
   model: ModelEntry,
 ): GalleryImage {
   const year = newestYear(model);
-  return (
-    usableImage(year?.images[0]) ??
-    firstCarImage(make, model) ??
-    brandFallback(make)
-  );
+  if (year) {
+    const enriched = enrichYearEntry(make.slug, model.slug, year);
+    const verified = enriched.images.find(
+      (img) =>
+        img.confidence === "verified" &&
+        usableImage(img) &&
+        !img.src.endsWith(".svg"),
+    );
+    if (verified) return verified;
+  }
+  return brandFallback(make);
 }
 
-/**
- * Best cover photo for a make tile: prefer a recent non-SVG car shot.
- * Falls back to the brand badge when nothing usable exists.
- */
+/** Make cover — brand badge only (auto car photos reverted as unreliable). */
 export function makeCoverImage(make: MakeEntry): GalleryImage {
-  const fromCar = firstCarImage(make);
-  if (fromCar) return fromCar;
-  const cover = usableImage(make.coverImage);
-  if (cover && !cover.src.endsWith(".svg")) return cover;
   return brandFallback(make);
 }
 
@@ -225,13 +203,12 @@ export function searchCatalog(query: string, limit = 40): SearchResult[] {
       (make.name.toLowerCase().includes(q) ||
         make.country.toLowerCase().includes(q))
     ) {
-      const image = firstCarImage(make) ?? brandFallback(make);
       results.push({
         type: "make",
         title: make.name,
         subtitle: make.country,
         href: makeHref(make.slug),
-        image,
+        image: brandFallback(make),
       });
     }
 
@@ -243,13 +220,12 @@ export function searchCatalog(query: string, limit = 40): SearchResult[] {
           `${make.name} ${model.name}`.toLowerCase().includes(q));
 
       if (modelMatch) {
-        const image = modelCardImage(make, model);
         results.push({
           type: "model",
           title: `${make.name} ${model.name}`,
           subtitle: model.tagline,
           href: modelHref(make.slug, model.slug),
-          image,
+          image: modelCardImage(make, model),
         });
       }
 
@@ -265,17 +241,12 @@ export function searchCatalog(query: string, limit = 40): SearchResult[] {
         }
 
         if (yearHit) {
-          const yearImage = usableImage(year.images[0]);
-          const image =
-            yearImage && !yearImage.src.endsWith(".svg")
-              ? yearImage
-              : (firstCarImage(make, model) ?? brandFallback(make));
           results.push({
             type: "year",
             title: yearLabel,
             subtitle: year.summary,
             href: yearHref(make.slug, model.slug, year.slug),
-            image,
+            image: modelCardImage(make, model),
           });
         }
       }

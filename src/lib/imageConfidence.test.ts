@@ -78,16 +78,16 @@ describe("enrichYearEntry image promotion", () => {
       description: "test",
       images: [
         {
-          src: "/catalog/toyota--camry.jpg",
+          src: "/brands/toyota.svg",
           alt: "year hero",
-          width: 1280,
-          height: 853,
+          width: 128,
+          height: 128,
         },
       ],
     };
     const enriched = enrichYearEntry("toyota", "camry", year);
-    // Default Camry trim is often LE (unverified XLE file) — year photo stays first.
-    expect(enriched.images[0]?.src).toBe("/catalog/toyota--camry.jpg");
+    // Default Camry trim is often LE (unverified) — badge/year placeholder stays first.
+    expect(enriched.images[0]?.src).toBe("/brands/toyota.svg");
     expect(enriched.images[0]?.confidence).toBe("yearOnly");
   });
 
@@ -109,10 +109,10 @@ describe("enrichYearEntry image promotion", () => {
       description: "test",
       images: [
         {
-          src: "/catalog/toyota--camry.jpg",
+          src: "/brands/toyota.svg",
           alt: "year hero",
-          width: 1280,
-          height: 853,
+          width: 128,
+          height: 128,
         },
       ],
       performance: {
